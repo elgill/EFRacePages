@@ -1,3 +1,4 @@
+import 'package:ef_race_pages/bib_reserve_page.dart';
 import 'package:ef_race_pages/registration_page.dart';
 import 'package:ef_race_pages/bib_lookup_page.dart';
 import 'package:ef_race_pages/results_page.dart';
@@ -24,12 +25,14 @@ class _RaceWebPagesState extends State<RaceWebPages> {
           children: [
             RegistrationPage(raceId: widget.raceId),
             BibLookupPage(raceId: widget.raceId),
+            BibReservePage(raceId: widget.raceId),
             ResultsPage(raceId: widget.raceId),
             // ... other pages
           ],
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         items: const [
           BottomNavigationBarItem(
@@ -39,6 +42,10 @@ class _RaceWebPagesState extends State<RaceWebPages> {
           BottomNavigationBarItem(
             icon: Icon(Icons.directions_run),
             label: 'Bib Lookup',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.event_note),
+            label: 'Bib Reserve',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.leaderboard),
