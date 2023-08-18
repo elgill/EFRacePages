@@ -22,9 +22,9 @@ class _RaceWebPagesState extends State<RaceWebPages> {
         child: IndexedStack(
           index: _currentIndex,
           children: [
+            RegistrationPage(raceId: widget.raceId),
             BibLookupPage(raceId: widget.raceId),
             ResultsPage(raceId: widget.raceId),
-            RegistrationPage(raceId: widget.raceId),
             // ... other pages
           ],
         ),
@@ -33,16 +33,16 @@ class _RaceWebPagesState extends State<RaceWebPages> {
         currentIndex: _currentIndex,
         items: const [
           BottomNavigationBarItem(
+            icon: Icon(Icons.app_registration),
+            label: 'Registration',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.directions_run),
-            label: 'Page 1',
+            label: 'Bib Lookup',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.leaderboard),
-            label: 'Page 2',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.app_registration),
-            label: 'Page 3',
+            label: 'Results',
           ),
         ],
         onTap: (index) {
