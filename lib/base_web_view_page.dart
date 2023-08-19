@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:qr/qr.dart';
-
 import 'package:webview_flutter/webview_flutter.dart';
 
 class BaseWebViewPage extends StatefulWidget {
@@ -58,7 +56,7 @@ class _BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAli
           child: FloatingActionButton(
             heroTag: null,
             onPressed: () {
-              _controller.reload();
+              _controller.loadUrl(widget.initialUrl);
             },
             child: const Icon(Icons.refresh),
           ),
@@ -93,16 +91,14 @@ class _BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAli
             data: _currentUrl!,
             version: QrVersions.auto,
             size: 200.0,
-            // Adjust QR code properties based on the current theme.
             foregroundColor: !isDarkMode ? Colors.black : Colors.white,
-            // ... any other QR code customization
           ),
 
         ),
 
         actions: [
           TextButton(
-            child: Text("Close"),
+            child: const Text("Close"),
             onPressed: () {
               Navigator.of(context).pop();
             },
