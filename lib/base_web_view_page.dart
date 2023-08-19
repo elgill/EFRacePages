@@ -14,14 +14,19 @@ class BaseWebViewPage extends StatefulWidget {
 }
 
 
-class _BaseWebViewPageState extends State<BaseWebViewPage> {
+class _BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliveClientMixin {
   bool _isLoading = true;
   late WebViewController _controller;
   String? _currentUrl;
   late QrCode _qrCode;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return Stack(
       children: [
         WebView(
