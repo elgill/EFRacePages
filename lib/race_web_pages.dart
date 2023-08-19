@@ -3,6 +3,7 @@ import 'package:ef_race_pages/registration_page.dart';
 import 'package:ef_race_pages/bib_lookup_page.dart';
 import 'package:ef_race_pages/results_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class RaceWebPages extends StatefulWidget {
   final String raceId;
@@ -18,6 +19,13 @@ class _RaceWebPagesState extends State<RaceWebPages> {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // Makes the status bar transparent
+      statusBarIconBrightness: Theme.of(context).brightness == Brightness.dark
+          ? Brightness.light // Use light icons on a dark background
+          : Brightness.dark, // Use dark icons on a light background
+    ));
+
     return Scaffold(
       body: SafeArea(
         child: IndexedStack(

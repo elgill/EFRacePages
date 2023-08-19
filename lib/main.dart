@@ -8,8 +8,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: RaceIDSettingPage(),
+    return MaterialApp(
+      theme: ThemeData(
+        brightness: Brightness.light,
+        // Add other theme properties if required
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        // Add other theme properties if required
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: const RaceIDSettingPage(),
     );
   }
 }
