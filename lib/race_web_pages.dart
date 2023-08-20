@@ -15,8 +15,8 @@ class RaceWebPages extends StatefulWidget {
 }
 
 class _RaceWebPagesState extends State<RaceWebPages> {
-  ValueNotifier<int> _currentIndexNotifier = ValueNotifier<int>(0);
-  PageController _pageController = PageController();
+  final ValueNotifier<int> _currentIndexNotifier = ValueNotifier<int>(0);
+  final PageController _pageController = PageController();
 
   @override
   void dispose() {
