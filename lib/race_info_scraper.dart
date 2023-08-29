@@ -1,12 +1,13 @@
 import 'package:ef_race_pages/race.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
+import 'dart:convert';
 
 Future<List<Race>> fetchRaces() async {
   try {
     final response = await http.get(Uri.parse('http://elitefeats.com/upcoming')).timeout(const Duration(seconds: 20));
     if (response.statusCode == 200 && response.body.isNotEmpty) {
-      var document = parse(response.body);
+      var document = parse(utf8.decode(response.bodyBytes));
       List<Race> races = [];
 
       for (var section in document.querySelectorAll('section.post')) {
