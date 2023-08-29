@@ -33,6 +33,7 @@ dependencies:
   webview_flutter: ^2.0.10
   shared_preferences: ^2.0.6
   qr_flutter: ^4.0.0
+  qr: ^2.1.0
   http: ^0.13.3
   html: ^0.15.0
 
