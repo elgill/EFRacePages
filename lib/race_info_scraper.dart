@@ -9,19 +9,6 @@ Future<List<Race>> fetchRaces() async {
       var document = parse(response.body);
       List<Race> races = [];
 
-/*
-      for (var section in document.querySelectorAll('section.post')) {
-        var date = section.querySelector('.BlueDateDiv')?.text ?? section.querySelector('.RedDateDiv')?.text;
-        var location = section.querySelector('div[style="text-align:center"] h3')?.text.trim();
-        var name = section.querySelector('h3[style="text-align:center;font-size: 1.2em"]')?.text.trim();
-        var id = section.querySelector('a[href^="../race-results.asp?ID="]')?.attributes['href']?.split('=').last;
-
-        if (id != null && date != null && location != null && name != null) {
-          races.add(Race(id: id, date: date, location: location, name: name));
-        }
-      }
-*/
-
       for (var section in document.querySelectorAll('section.post')) {
         var isRedDate = section.querySelector('.RedDateDiv') != null;
         var date = section.querySelector('.BlueDateDiv')?.text ?? section.querySelector('.RedDateDiv')?.text;
