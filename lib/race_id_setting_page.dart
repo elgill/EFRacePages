@@ -48,7 +48,7 @@ class _RaceIDSettingPageState extends State<RaceIDSettingPage> {
     return Scaffold(
       body: SafeArea(
         child: isLoading
-            ? Center(child: CircularProgressIndicator())  // Show loading indicator while fetching
+            ? const Center(child: CircularProgressIndicator())  // Show loading indicator while fetching
             : errorMessage != null
             ? Center(child: Text(errorMessage!))  // Show the error message if there's any
             : Center(
