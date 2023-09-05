@@ -1,4 +1,4 @@
-import 'package:ef_race_pages/race.dart';
+import 'package:ef_race_pages/models/race.dart';
 import 'package:ef_race_pages/race_info_scraper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
@@ -50,38 +50,44 @@ class _RaceIDSettingPageState extends State<RaceIDSettingPage> {
         child: isLoading
             ? const Center(child: CircularProgressIndicator())  // Show loading indicator while fetching
             : errorMessage != null
-            ? Center(child: Text(errorMessage!))  // Show the error message if there's any
-            : Center(
-          child: Column(
-            children: [
-              TextField(
-                controller: _controller,
-                decoration: const InputDecoration(labelText: "Enter RaceID"),
-              ),
-              ElevatedButton(
-                onPressed: _saveRaceID,
-                child: const Text("Save and View Race Pages"),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: races.length,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      title: Text(races[index].name),
-                      subtitle: Text('${races[index].location} on ${races[index].date}'),
-                      trailing: Text(races[index].id),
-                      onTap: () {
-                        _controller.text = races[index].id;
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
+            ? buildErrorWidget()  // Show the error message if there's any
+            : buildSelectorPage(),
       ),
     );
   }
+
+  Widget buildSelectorPage() {
+    return Center(
+        child: Column(
+          children: [
+            TextField(
+              controller: _controller,
+              decoration: const InputDecoration(labelText: "Enter RaceID"),
+            ),
+            ElevatedButton(
+              onPressed: _saveRaceID,
+              child: const Text("Save and View Race Pages"),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: races.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(races[index].name),
+                    subtitle: Text('${races[index].location} on ${races[index].date}'),
+                    trailing: Text(races[index].id),
+                    onTap: () {
+                      _controller.text = races[index].id;
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+  }
+
+  Widget buildErrorWidget() => Center(child: Text(errorMessage!));
 }
 

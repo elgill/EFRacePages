@@ -1,4 +1,4 @@
-import 'package:ef_race_pages/race.dart';
+import 'package:ef_race_pages/models/race.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'dart:convert';

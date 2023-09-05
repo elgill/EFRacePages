@@ -1,7 +1,7 @@
-import 'package:ef_race_pages/bib_reserve_page.dart';
-import 'package:ef_race_pages/registration_page.dart';
-import 'package:ef_race_pages/bib_lookup_page.dart';
-import 'package:ef_race_pages/results_page.dart';
+import 'package:ef_race_pages/pages/bib_reserve_page.dart';
+import 'package:ef_race_pages/pages/registration_page.dart';
+import 'package:ef_race_pages/pages/bib_lookup_page.dart';
+import 'package:ef_race_pages/pages/results_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
