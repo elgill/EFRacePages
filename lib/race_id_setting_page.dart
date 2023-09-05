@@ -18,9 +18,12 @@ class _RaceIDSettingPageState extends State<RaceIDSettingPage> {
   bool isLoading = true;
   String? errorMessage;  // To store an error message, if any
 
-  @override
-  void initState() {
-    super.initState();
+  void fetchData() {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
     fetchRaces().then((fetchedRaces) {
       setState(() {
         races = fetchedRaces;
@@ -33,6 +36,13 @@ class _RaceIDSettingPageState extends State<RaceIDSettingPage> {
       });
     });
   }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchData();
+  }
+
 
   _saveRaceID() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -88,6 +98,19 @@ class _RaceIDSettingPageState extends State<RaceIDSettingPage> {
       );
   }
 
-  Widget buildErrorWidget() => Center(child: Text(errorMessage!));
+  Widget buildErrorWidget() => Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(errorMessage!),
+        const SizedBox(height: 20), // spacing between the error message and the button
+        ElevatedButton(
+          onPressed: fetchData,
+          child: const Text("Retry"),
+        )
+      ],
+    ),
+  );
+
 }
 
