@@ -57,11 +57,7 @@ class _RaceIDSettingPageState extends State<RaceIDSettingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())  // Show loading indicator while fetching
-            : errorMessage != null
-            ? buildErrorWidget()  // Show the error message if there's any
-            : buildSelectorPage(),
+        child: buildSelectorPage(),
       ),
     );
   }
@@ -78,21 +74,7 @@ class _RaceIDSettingPageState extends State<RaceIDSettingPage> {
               onPressed: _saveRaceID,
               child: const Text("Save and View Race Pages"),
             ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: races.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(races[index].name),
-                    subtitle: Text('${races[index].location} on ${races[index].date}'),
-                    trailing: Text(races[index].id),
-                    onTap: () {
-                      _controller.text = races[index].id;
-                    },
-                  );
-                },
-              ),
-            ),
+            _buildRaceList(),
           ],
         ),
       );
@@ -111,6 +93,32 @@ class _RaceIDSettingPageState extends State<RaceIDSettingPage> {
       ],
     ),
   );
+
+  Widget _buildRaceList(){
+    if(isLoading) {
+      return const Center(child: CircularProgressIndicator());  // Show loading indicator while fetching
+    }
+
+    if (errorMessage!=null){
+      return buildErrorWidget();
+    }
+
+    return Expanded(
+      child: ListView.builder(
+        itemCount: races.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text(races[index].name),
+            subtitle: Text('${races[index].location} on ${races[index].date}'),
+            trailing: Text(races[index].id),
+            onTap: () {
+              _controller.text = races[index].id;
+            },
+          );
+        },
+      ),
+    );
+  }
 
 }
 
