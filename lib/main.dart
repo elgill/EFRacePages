@@ -1,4 +1,6 @@
 import 'package:ef_race_pages/race_id_setting_page.dart';
+import 'package:ef_race_pages/race_web_pages.dart';
+import 'package:ef_race_pages/services/recent_event_manager.dart';
 import 'package:flutter/material.dart';
 
 void main() => runApp(const MyApp());
@@ -21,7 +23,20 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const RaceIDSettingPage(),
+      home: FutureBuilder<String?>(
+        future: getCurrentRace(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.data != null) {
+              return RaceWebPages(raceId: snapshot.data!);
+            } else {
+              return RaceIDSettingPage();
+            }
+          } else {
+            return CircularProgressIndicator();  // Show a loading spinner while checking
+          }
+        },
+      ),
     );
   }
 }

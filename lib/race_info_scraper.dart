@@ -1,4 +1,5 @@
 import 'package:ef_race_pages/models/race.dart';
+import 'package:ef_race_pages/services/race_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'dart:convert';
@@ -24,7 +25,10 @@ Future<List<Race>> fetchRaces() async {
         var id = section.querySelector('a[href^="../race-results.asp?ID="]')?.attributes['href']?.split('=').last;
 
         if (id != null && date != null && location != null && name != null) {
-          races.add(Race(id: id, date: date, location: location, name: name));
+          Race race= Race(id: id, date: date, location: location, name: name);
+          races.add(race);
+          await RaceService.saveRace(race);
+
         }
       }
 
