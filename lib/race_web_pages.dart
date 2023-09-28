@@ -2,6 +2,8 @@ import 'package:ef_race_pages/pages/bib_reserve_page.dart';
 import 'package:ef_race_pages/pages/registration_page.dart';
 import 'package:ef_race_pages/pages/bib_lookup_page.dart';
 import 'package:ef_race_pages/pages/results_page.dart';
+import 'package:ef_race_pages/race_id_setting_page.dart';
+import 'package:ef_race_pages/services/recent_event_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -25,6 +27,60 @@ class _RaceWebPagesState extends State<RaceWebPages> {
     super.dispose();
   }
 
+  Widget _buildDrawer() {
+    return FutureBuilder<List<String>>(
+      future: getRecentRaces(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Drawer(child: const Center(child: CircularProgressIndicator()));
+        }
+
+        List<String> recentRaces = snapshot.data!;
+        return Drawer(
+          child: ListView(
+            children: [
+              ...recentRaces.map((raceId) => ListTile(
+                title: Text("Race: $raceId"),
+                trailing: IconButton(
+                  icon: Icon(Icons.clear),
+                  onPressed: () {
+                    removeRaceFromRecentList(raceId);
+                    setState(() {});  // Refresh UI
+                  },
+                ),
+                onTap: () {
+                  Navigator.pop(context);  // Close the drawer
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => RaceWebPages(raceId: raceId),
+                    ),
+                  );
+                },
+              )),
+              ListTile(
+                title: Text("Add New Race"),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => RaceIDSettingPage()),
+                  );
+                },
+              ),
+              ListTile(
+                title: Text("Clear All"),
+                onTap: () {
+                  clearAllRecentRaces();
+                  setState(() {});  // Refresh UI
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
@@ -35,6 +91,10 @@ class _RaceWebPagesState extends State<RaceWebPages> {
     ));
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text("Race Web Pages"),
+      ),
+      drawer: _buildDrawer(),
       body: SafeArea(
         child: PageView.builder(
           controller: _pageController,

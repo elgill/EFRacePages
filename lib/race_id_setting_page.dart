@@ -1,5 +1,6 @@
 import 'package:ef_race_pages/models/race.dart';
 import 'package:ef_race_pages/race_info_scraper.dart';
+import 'package:ef_race_pages/services/recent_event_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:ef_race_pages/race_web_pages.dart';
@@ -45,13 +46,13 @@ class _RaceIDSettingPageState extends State<RaceIDSettingPage> {
 
 
   _saveRaceID() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('raceid', _controller.text);
+    await addRaceToRecentList(_controller.text);
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => RaceWebPages(raceId: _controller.text)),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
