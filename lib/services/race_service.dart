@@ -17,8 +17,9 @@ class RaceService {
     if (jsonString != null) {
       final jsonData = json.decode(jsonString); // Convert JSON string to Map
       return Race.fromJson(jsonData); // Convert Map to Race object
+    } else{
+      return Race(id: id, date: '', location: '', name: 'Unknown: $id');
     }
-    return null; // Return null if id does not exist in SharedPreferences
   }
 
   static Future<List<Race>> getAllRaces() async {

@@ -86,16 +86,16 @@ class _RaceWebPagesState extends State<RaceWebPages> {
                     },
                   )),
                   ListTile(
-                    title: Text("Add New Race"),
+                    title: const Text("Add New Race"),
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => RaceIDSettingPage()),
+                        MaterialPageRoute(builder: (context) => const RaceIDSettingPage()),
                       );
                     },
                   ),
                   ListTile(
-                    title: Text("Clear All"),
+                    title: const Text("Clear All"),
                     onTap: () {
                       clearAllRecentRaces();
                       setState(() {});  // Refresh UI
