@@ -52,9 +52,11 @@ class _RaceIDSettingPageState extends State<RaceIDSettingPage> {
   _saveRaceID() async {
     await addRaceToRecentList(_controller.text);
     await saveCurrentRace(_controller.text);
-    Navigator.push(
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => RaceWebPages(raceId: _controller.text)),
+        (Route<dynamic> route) => false, // Always false, removing all previous routes
+
     );
   }
 
@@ -62,6 +64,9 @@ class _RaceIDSettingPageState extends State<RaceIDSettingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("Add Race"),
+      ),
       body: SafeArea(
         child: buildSelectorPage(),
       ),
