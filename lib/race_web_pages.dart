@@ -66,12 +66,28 @@ class _RaceWebPagesState extends State<RaceWebPages> {
               child: ListView(
                 children: [
                   ...recentRaces.map((race) => ListTile(
+                    tileColor: race.id == widget.raceId
+                        ? Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[800]
+                        : Colors.grey[200]
+                        : null, // Highlight current race based on theme // Highlight current race
                     title: Text("${race.name} (${race.id})"),
                     trailing: IconButton(
-                      icon: Icon(Icons.clear),
+                      icon: const Icon(Icons.clear),
                       onPressed: () {
                         removeRaceFromRecentList(race.id);
-                        setState(() {});  // Refresh UI
+                        if(race.id == widget.raceId){
+                          clearCurrentRace();
+                          Navigator.pop(context);  // Close the drawer
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RaceIDSettingPage(),
+                            ),
+                          );
+                        } else {
+                          setState(() {});
+                        }// Refresh UI
                       },
                     ),
                     onTap: () {
@@ -98,6 +114,14 @@ class _RaceWebPagesState extends State<RaceWebPages> {
                     title: const Text("Clear All"),
                     onTap: () {
                       clearAllRecentRaces();
+                      clearCurrentRace();
+                      Navigator.pop(context);  // Close the drawer
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RaceIDSettingPage(),
+                        ),
+                      );
                       setState(() {});  // Refresh UI
                     },
                   ),

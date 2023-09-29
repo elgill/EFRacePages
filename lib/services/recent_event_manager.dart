@@ -26,6 +26,11 @@ Future<void> removeRaceFromRecentList(String raceId) async {
   await prefs.setStringList('recentRaces', recentRaces);
 }
 
+Future<void> clearCurrentRace() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.remove('currentRace');
+}
+
 Future<void> saveCurrentRace(String raceid) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.setString('currentRace', raceid);

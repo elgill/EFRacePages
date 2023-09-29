@@ -25,16 +25,21 @@ class _RaceIDSettingPageState extends State<RaceIDSettingPage> {
     });
 
     fetchRaces().then((fetchedRaces) {
-      setState(() {
-        races = fetchedRaces;
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          races = fetchedRaces;
+          isLoading = false;
+        });
+      }
     }).catchError((error) {
-      setState(() {
-        isLoading = false;
-        errorMessage = "Failed to fetch races. Please try again later.";
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          errorMessage = "Failed to fetch races. Please try again later.";
+        });
+      }
     });
+
   }
 
   @override
