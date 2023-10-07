@@ -76,9 +76,11 @@ class _RaceWebPagesState extends State<RaceWebPages> {
                       icon: const Icon(Icons.clear),
                       onPressed: () {
                         removeRaceFromRecentList(race.id);
+
                         if(race.id == widget.raceId){
                           clearCurrentRace();
                           Navigator.pop(context);  // Close the drawer
+
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
