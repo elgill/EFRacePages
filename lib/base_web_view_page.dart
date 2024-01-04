@@ -82,7 +82,7 @@ class _BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAli
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("QR Code for Current Page"),
+        title: const Text("QR Code"),
         backgroundColor: !isDarkMode ? Colors.white : Colors.black,
         content: SizedBox(
           width: 200,
