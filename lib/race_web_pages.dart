@@ -2,6 +2,7 @@ import 'package:ef_race_pages/pages/bib_reserve_page.dart';
 import 'package:ef_race_pages/pages/registration_page.dart';
 import 'package:ef_race_pages/pages/bib_lookup_page.dart';
 import 'package:ef_race_pages/pages/results_page.dart';
+import 'package:ef_race_pages/pages/search_page.dart';
 import 'package:ef_race_pages/race_id_setting_page.dart';
 import 'package:ef_race_pages/services/race_service.dart';
 import 'package:ef_race_pages/services/recent_event_manager.dart';
@@ -160,6 +161,7 @@ class _RaceWebPagesState extends State<RaceWebPages> {
             if (index == 1) return BibLookupPage(raceId: widget.raceId);
             if (index == 2) return BibReservePage(raceId: widget.raceId);
             if (index == 3) return ResultsPage(raceId: widget.raceId);
+            if (index == 4) return SearchPage(raceId: widget.raceId);
             //... add more cases as required
             return Container();
           },
@@ -178,15 +180,19 @@ class _RaceWebPagesState extends State<RaceWebPages> {
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.directions_run),
-                label: 'Bib Lookup',
+                label: 'Lookup',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.event_note),
-                label: 'Bib Reserve',
+                label: 'Reserve',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.leaderboard),
                 label: 'Results',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.search),
+                label: 'Search',
               ),
             ],
             onTap: (index) {
