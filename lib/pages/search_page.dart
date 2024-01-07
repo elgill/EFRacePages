@@ -16,6 +16,7 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   List<Map<String, dynamic>> _searchResults = [];
   bool _isLoading = true;
+  bool _isAscending = true;
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -113,6 +114,9 @@ class _SearchPageState extends State<SearchPage> {
     final db = await _openDatabase();
     List<Map<String, dynamic>> results = [];
 
+    // Define the sort order based on the _isAscending flag
+    String sortOrder = _isAscending ? 'ASC' : 'DESC';
+
     if (query.contains('-')) {
       // Handle range query
       var parts = query.split('-');
@@ -124,7 +128,7 @@ class _SearchPageState extends State<SearchPage> {
           'bib_data',
           where: 'bib BETWEEN ? AND ?',
           whereArgs: [start, end],
-          orderBy: 'bib ASC', // Order by bib number in ascending order
+          orderBy: 'bib $sortOrder', // Use sortOrder in the query
         );
       }
     } else {
@@ -133,7 +137,7 @@ class _SearchPageState extends State<SearchPage> {
         'bib_data',
         where: 'bib LIKE ? OR name LIKE ?',
         whereArgs: ['%$query%', '%$query%'],
-        orderBy: 'bib ASC', // Order by bib number in ascending order
+        orderBy: 'bib $sortOrder', // Use sortOrder in the query
       );
     }
 
@@ -158,7 +162,6 @@ class _SearchPageState extends State<SearchPage> {
     await db.close();
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -168,24 +171,39 @@ class _SearchPageState extends State<SearchPage> {
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _searchDatabase,
-              decoration: InputDecoration(
-                labelText: 'Search by Bib or Name',
-                border: const OutlineInputBorder(),
-                suffixIcon: _searchController.text.isEmpty
-                    ? null
-                    : IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    _searchDatabase(''); // Clear search results
-                  },
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _searchDatabase,
+                    decoration: InputDecoration(
+                      labelText: 'Search by Bib or Name',
+                      border: const OutlineInputBorder(),
+                      suffixIcon: _searchController.text.isEmpty
+                          ? null
+                          : IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          _searchDatabase(''); // Clear search results
+                        },
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                IconButton(
+                  icon: Icon(_isAscending ? Icons.arrow_upward : Icons.arrow_downward),
+                  onPressed: () {
+                    setState(() {
+                      _isAscending = !_isAscending; // Toggle sorting order
+                      _searchDatabase(_searchController.text); // Perform search again with new order
+                    });
+                  },
+                  tooltip: 'Toggle Sort Order',
+                ),
+              ],
             ),
-
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
