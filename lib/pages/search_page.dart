@@ -165,75 +165,80 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: _searchDatabase,
-                    decoration: InputDecoration(
-                      labelText: 'Search by Bib or Name',
-                      border: const OutlineInputBorder(),
-                      suffixIcon: _searchController.text.isEmpty
-                          ? null
-                          : IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          _searchDatabase(''); // Clear search results
-                        },
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus(); // Unfocus text field when tapping outside
+        },
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _searchDatabase,
+                      decoration: InputDecoration(
+                        labelText: 'Search by Bib or Name',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: _searchController.text.isEmpty
+                            ? null
+                            : IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            _searchDatabase(''); // Clear search results
+                          },
+                        ),
                       ),
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: Icon(_isAscending ? Icons.arrow_upward : Icons.arrow_downward),
-                  onPressed: () {
-                    setState(() {
-                      _isAscending = !_isAscending; // Toggle sorting order
-                      _searchDatabase(_searchController.text); // Perform search again with new order
-                    });
-                  },
-                  tooltip: 'Toggle Sort Order',
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text('Results: ${_searchResults.length}'),
-          ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                await _loadData();
-              },
-              child: ListView.builder(
-                itemCount: _searchResults.length,
-                itemBuilder: (context, index) {
-                  var result = _searchResults[index];
-                  return ListTile(
-                    title: Text(result['name']),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Bib: ${result['bib']}'),
-                        Text('Div: ${result['division']}'),
-                        Text('T-Shirt: ${result['t_shirt']}'), // Display t-shirt size
-                      ],
-                    ),
-                  );
-                },
+                  IconButton(
+                    icon: Icon(_isAscending ? Icons.arrow_upward : Icons.arrow_downward),
+                    onPressed: () {
+                      setState(() {
+                        _isAscending = !_isAscending; // Toggle sorting order
+                        _searchDatabase(_searchController.text); // Perform search again with new order
+                      });
+                    },
+                    tooltip: 'Toggle Sort Order',
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('Results: ${_searchResults.length}'),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await _loadData();
+                },
+                child: ListView.builder(
+                  itemCount: _searchResults.length,
+                  itemBuilder: (context, index) {
+                    var result = _searchResults[index];
+                    return ListTile(
+                      title: Text(result['name']),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Bib: ${result['bib']}'),
+                          Text('Div: ${result['division']}'),
+                          Text('T-Shirt: ${result['t_shirt']}'), // Display t-shirt size
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
