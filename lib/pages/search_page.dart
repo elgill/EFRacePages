@@ -110,6 +110,7 @@ class _SearchPageState extends State<SearchPage> {
     setState(() => _isLoading = false);
   }
 
+/*
   Future<void> _searchDatabase(String query) async {
     final db = await _openDatabase();
     List<Map<String, dynamic>> results = [];
@@ -131,6 +132,59 @@ class _SearchPageState extends State<SearchPage> {
           orderBy: 'bib $sortOrder', // Use sortOrder in the query
         );
       }
+    } else {
+      // Handle regular query
+      results = await db.query(
+        'bib_data',
+        where: 'bib LIKE ? OR name LIKE ?',
+        whereArgs: ['%$query%', '%$query%'],
+        orderBy: 'bib $sortOrder', // Use sortOrder in the query
+      );
+    }
+
+    setState(() {
+      _searchResults = results;
+    });
+    await db.close();
+  }
+*/
+
+  Future<void> _searchDatabase(String query) async {
+    final db = await _openDatabase();
+    List<Map<String, dynamic>> results = [];
+
+    // Define the sort order based on the _isAscending flag
+    String sortOrder = _isAscending ? 'ASC' : 'DESC';
+
+    if (query.contains('-')) {
+      // Handle range query
+      var parts = query.split('-');
+      if (parts.length == 2) {
+        int start = int.tryParse(parts[0].trim()) ?? 0;
+        int end = int.tryParse(parts[1].trim()) ?? 0;
+
+        results = await db.query(
+          'bib_data',
+          where: 'bib BETWEEN ? AND ?',
+          whereArgs: [start, end],
+          orderBy: 'bib $sortOrder', // Use sortOrder in the query
+        );
+      }
+    } else if (query.contains('/')) {
+      // Handle multiple bib numbers or names
+      var searchTerms = query.split('/').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+
+      // Building a combined query for bib and name
+      var combinedQuery = searchTerms.map((term) {
+        return '(bib LIKE ? OR name LIKE ?)';
+      }).join(' OR ');
+
+      results = await db.query(
+        'bib_data',
+        where: combinedQuery,
+        whereArgs: searchTerms.expand((term) => ['%$term%', '%$term%']).toList(),
+        orderBy: 'bib $sortOrder',
+      );
     } else {
       // Handle regular query
       results = await db.query(
@@ -182,7 +236,8 @@ class _SearchPageState extends State<SearchPage> {
                       controller: _searchController,
                       onChanged: _searchDatabase,
                       decoration: InputDecoration(
-                        labelText: 'Search by Bib or Name',
+                        labelText: 'Search (e.g. "123", "Doe", "102-105", "101/150")',
+                        //helperText: 'Enter bib numbers, names, ranges (100-105), or multiple terms separated by "/"',
                         border: const OutlineInputBorder(),
                         suffixIcon: _searchController.text.isEmpty
                             ? null
