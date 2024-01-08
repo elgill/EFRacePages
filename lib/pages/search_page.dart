@@ -237,7 +237,6 @@ class _SearchPageState extends State<SearchPage> {
                       onChanged: _searchDatabase,
                       decoration: InputDecoration(
                         labelText: 'Search (e.g. "123", "Doe", "102-105", "101/150")',
-                        //helperText: 'Enter bib numbers, names, ranges (100-105), or multiple terms separated by "/"',
                         border: const OutlineInputBorder(),
                         suffixIcon: _searchController.text.isEmpty
                             ? null
