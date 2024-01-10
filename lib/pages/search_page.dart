@@ -108,19 +108,29 @@ class _SearchPageState extends State<SearchPage> {
       if (scrapedData.isNotEmpty) {
         await storeDataLocally(scrapedData);
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Updated ${scrapedData.length} participants'))
+            SnackBar(
+                content: Text('Updated ${scrapedData.length} participants'),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+            )
         );
       } else {
         // No data scraped, possibly due to network error
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to load data. Please check your internet connection.'))
+            const SnackBar(
+                content: Text('Failed to load data. Please check your internet connection.'),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+            )
         );
       }
     } catch (e) {
-      // Handle exceptions during data loading
-      //print('Error loading data: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An error occurred: $e'))
+          SnackBar(
+              content: Text('An error occurred: $e'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+          )
       );
     } finally {
       setState(() => _isLoading = false);
