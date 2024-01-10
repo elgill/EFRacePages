@@ -103,51 +103,30 @@ class _SearchPageState extends State<SearchPage> {
 
 
   Future<void> _loadData() async {
-    // Here, call the method to scrape data and then store it locally
-    var scrapedData = await scrapeDataFromWebPage(widget.raceId);
-    await storeDataLocally(scrapedData);
-
-    setState(() => _isLoading = false);
-  }
-
-/*
-  Future<void> _searchDatabase(String query) async {
-    final db = await _openDatabase();
-    List<Map<String, dynamic>> results = [];
-
-    // Define the sort order based on the _isAscending flag
-    String sortOrder = _isAscending ? 'ASC' : 'DESC';
-
-    if (query.contains('-')) {
-      // Handle range query
-      var parts = query.split('-');
-      if (parts.length == 2) {
-        int start = int.tryParse(parts[0].trim()) ?? 0;
-        int end = int.tryParse(parts[1].trim()) ?? 0;
-
-        results = await db.query(
-          'bib_data',
-          where: 'bib BETWEEN ? AND ?',
-          whereArgs: [start, end],
-          orderBy: 'bib $sortOrder', // Use sortOrder in the query
+    try {
+      var scrapedData = await scrapeDataFromWebPage(widget.raceId);
+      if (scrapedData.isNotEmpty) {
+        await storeDataLocally(scrapedData);
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Updated ${scrapedData.length} participants'))
+        );
+      } else {
+        // No data scraped, possibly due to network error
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to load data. Please check your internet connection.'))
         );
       }
-    } else {
-      // Handle regular query
-      results = await db.query(
-        'bib_data',
-        where: 'bib LIKE ? OR name LIKE ?',
-        whereArgs: ['%$query%', '%$query%'],
-        orderBy: 'bib $sortOrder', // Use sortOrder in the query
+    } catch (e) {
+      // Handle exceptions during data loading
+      //print('Error loading data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An error occurred: $e'))
       );
+    } finally {
+      setState(() => _isLoading = false);
     }
-
-    setState(() {
-      _searchResults = results;
-    });
-    await db.close();
   }
-*/
+
 
   Future<void> _searchDatabase(String query) async {
     final db = await _openDatabase();
