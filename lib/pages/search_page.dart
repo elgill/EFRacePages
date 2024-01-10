@@ -105,8 +105,11 @@ class _SearchPageState extends State<SearchPage> {
   Future<void> _loadData() async {
     try {
       var scrapedData = await scrapeDataFromWebPage(widget.raceId);
+
       if (scrapedData.isNotEmpty) {
         await storeDataLocally(scrapedData);
+
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Updated ${scrapedData.length} participants'),
@@ -115,6 +118,8 @@ class _SearchPageState extends State<SearchPage> {
             )
         );
       } else {
+        if (!mounted) return;
+
         // No data scraped, possibly due to network error
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
