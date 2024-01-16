@@ -143,6 +143,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
 
+/*
   Future<void> _searchDatabase(String query) async {
     final db = await _openDatabase();
     List<Map<String, dynamic>> results = [];
@@ -188,6 +189,54 @@ class _SearchPageState extends State<SearchPage> {
         orderBy: 'bib $sortOrder', // Use sortOrder in the query
       );
     }
+
+    setState(() {
+      _searchResults = results;
+    });
+    await db.close();
+  }
+*/
+
+  Future<void> _searchDatabase(String query) async {
+    final db = await _openDatabase();
+    List<Map<String, dynamic>> results = [];
+
+    // Define the sort order based on the _isAscending flag
+    String sortOrder = _isAscending ? 'ASC' : 'DESC';
+
+    // Split the query by '/' for multiple terms
+    var searchTerms = query.split('/').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+
+    // Building a combined query for each term
+    var combinedQuery = searchTerms.map((term) {
+      if (term.contains('-')) {
+        // Handle range within the term
+        var parts = term.split('-');
+        if (parts.length == 2) {
+          return '(bib BETWEEN ? AND ?)';
+        }
+      }
+      // Handle single bib number or name
+      return '(bib LIKE ? OR name LIKE ?)';
+    }).join(' OR ');
+
+    // Flatten the arguments for the query
+    var whereArgs = searchTerms.expand((term) {
+      if (term.contains('-')) {
+        var parts = term.split('-');
+        if (parts.length == 2) {
+          return [int.tryParse(parts[0].trim()) ?? 0, int.tryParse(parts[1].trim()) ?? 0];
+        }
+      }
+      return ['%$term%', '%$term%'];
+    }).toList();
+
+    results = await db.query(
+      'bib_data',
+      where: combinedQuery,
+      whereArgs: whereArgs,
+      orderBy: 'bib $sortOrder',
+    );
 
     setState(() {
       _searchResults = results;
