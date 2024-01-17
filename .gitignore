@@ -67,6 +67,9 @@ build/
 **/ios/Runner/GeneratedPluginRegistrant.*
 
 
+**/macos/Flutter/GeneratedPluginRegistrant.*
+
+
 ### https://raw.github.com/github/gitignore//Android.gitignore
 
 # Built application files
