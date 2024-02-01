@@ -143,60 +143,6 @@ class _SearchPageState extends State<SearchPage> {
   }
 
 
-/*
-  Future<void> _searchDatabase(String query) async {
-    final db = await _openDatabase();
-    List<Map<String, dynamic>> results = [];
-
-    // Define the sort order based on the _isAscending flag
-    String sortOrder = _isAscending ? 'ASC' : 'DESC';
-
-    if (query.contains('-')) {
-      // Handle range query
-      var parts = query.split('-');
-      if (parts.length == 2) {
-        int start = int.tryParse(parts[0].trim()) ?? 0;
-        int end = int.tryParse(parts[1].trim()) ?? 0;
-
-        results = await db.query(
-          'bib_data',
-          where: 'bib BETWEEN ? AND ?',
-          whereArgs: [start, end],
-          orderBy: 'bib $sortOrder', // Use sortOrder in the query
-        );
-      }
-    } else if (query.contains('/')) {
-      // Handle multiple bib numbers or names
-      var searchTerms = query.split('/').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
-
-      // Building a combined query for bib and name
-      var combinedQuery = searchTerms.map((term) {
-        return '(bib LIKE ? OR name LIKE ?)';
-      }).join(' OR ');
-
-      results = await db.query(
-        'bib_data',
-        where: combinedQuery,
-        whereArgs: searchTerms.expand((term) => ['%$term%', '%$term%']).toList(),
-        orderBy: 'bib $sortOrder',
-      );
-    } else {
-      // Handle regular query
-      results = await db.query(
-        'bib_data',
-        where: 'bib LIKE ? OR name LIKE ?',
-        whereArgs: ['%$query%', '%$query%'],
-        orderBy: 'bib $sortOrder', // Use sortOrder in the query
-      );
-    }
-
-    setState(() {
-      _searchResults = results;
-    });
-    await db.close();
-  }
-*/
-
   Future<void> _searchDatabase(String query) async {
     final db = await _openDatabase();
     List<Map<String, dynamic>> results = [];
@@ -220,23 +166,31 @@ class _SearchPageState extends State<SearchPage> {
       return '(bib LIKE ? OR name LIKE ?)';
     }).join(' OR ');
 
-    // Flatten the arguments for the query
-    var whereArgs = searchTerms.expand((term) {
-      if (term.contains('-')) {
-        var parts = term.split('-');
-        if (parts.length == 2) {
-          return [int.tryParse(parts[0].trim()) ?? 0, int.tryParse(parts[1].trim()) ?? 0];
+    if(combinedQuery.isNotEmpty){
+      // Flatten the arguments for the query
+      var whereArgs = searchTerms.expand((term) {
+        if (term.contains('-')) {
+          var parts = term.split('-');
+          if (parts.length == 2) {
+            return [int.tryParse(parts[0].trim()) ?? 0, int.tryParse(parts[1].trim()) ?? 0];
+          }
+        } else if (RegExp(r'^\d+$').hasMatch(term)) {
+          // Ensure bib numbers are passed as integers
+          return [int.tryParse(term),'%$term%'];
         }
-      }
-      return ['%$term%', '%$term%'];
-    }).toList();
+        return ['%$term%', '%$term%'];
+      }).toList();
 
-    results = await db.query(
-      'bib_data',
-      where: combinedQuery,
-      whereArgs: whereArgs,
-      orderBy: 'bib $sortOrder',
-    );
+      results = await db.query(
+        'bib_data',
+        where: combinedQuery,
+        whereArgs: whereArgs,
+        orderBy: 'bib $sortOrder',
+      );
+    } else {
+      results = await db.query('bib_data', orderBy: 'bib $sortOrder');
+    }
+
 
     setState(() {
       _searchResults = results;
