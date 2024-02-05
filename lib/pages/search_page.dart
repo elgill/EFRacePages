@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -68,7 +70,7 @@ class _SearchPageState extends State<SearchPage> {
     // Check for response status
     if (response.statusCode == 200) {
       // Parse the HTML
-      final document = parser.parse(response.body);
+      final document = parser.parse(utf8.decode(response.bodyBytes));
 
       // Find the table with the runner information
       final table = document.querySelector('table'); // Adjust the selector as needed
