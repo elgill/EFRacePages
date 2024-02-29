@@ -119,6 +119,7 @@ class _SearchPageState extends State<SearchPage> {
                 behavior: SnackBarBehavior.floating,
             )
         );
+        _searchDatabase('');
       } else {
         if (!mounted) return;
 
