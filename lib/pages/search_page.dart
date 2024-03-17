@@ -93,6 +93,8 @@ class _SearchPageState extends State<SearchPage> {
             'division': cells[6],
             'team': cells[7],
             't_shirt': cells[8],
+            'extra': cells[9],
+            'status': cells[10],
           });
         }
       }
@@ -219,6 +221,11 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showStats,
+        tooltip: 'Show Stats',
+        child: const Icon(Icons.analytics),
+      ),
       body: GestureDetector(
         onTap: () {
           FocusScope.of(context).unfocus(); // Unfocus text field when tapping outside
@@ -296,5 +303,58 @@ class _SearchPageState extends State<SearchPage> {
       ),
     );
   }
+
+  Future<void> _showStats() async {
+    final db = await _openDatabase();
+    // Example query to calculate total number of people for each t-shirt size
+    List<Map> tShirtSizes = await db.rawQuery('SELECT t_shirt, COUNT(*) as total FROM bib_data GROUP BY t_shirt ORDER BY COUNT(*) DESC');
+
+    // Similar queries for division and gender
+    List<Map> divisions = await db.rawQuery('SELECT division, COUNT(*) as total FROM bib_data GROUP BY division ORDER BY COUNT(*) DESC');
+    List<Map> genders = await db.rawQuery('SELECT gender, COUNT(*) as total FROM bib_data GROUP BY gender ORDER BY COUNT(*) DESC');
+    List<Map> teams = await db.rawQuery('SELECT team, COUNT(*) as total FROM bib_data GROUP BY team ORDER BY COUNT(*) DESC');
+
+    await db.close();
+
+    // Show the results
+    _showStatsDialog(tShirtSizes, divisions, genders, teams);
+  }
+
+  void _showStatsDialog(List<Map> tShirtSizes, List<Map> divisions, List<Map> genders, List<Map> teams) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Statistics'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: [
+                const Text('Divisions:'),
+                ...divisions.map((e) => Text('${e['division']}: ${e['total']}')).toList(),
+                const SizedBox(height: 16),
+                const Text('T-Shirt Sizes:'),
+                ...tShirtSizes.map((e) => Text('${e['t_shirt']}: ${e['total']}')).toList(),
+                const SizedBox(height: 16),
+                const Text('Teams:'),
+                ...teams.map((e) => Text('${e['team']}: ${e['total']}')).toList(),
+                const SizedBox(height: 16),
+                const Text('Genders:'),
+                ...genders.map((e) => Text('${e['gender']}: ${e['total']}')).toList(),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
 }
