@@ -321,6 +321,9 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _showStatsDialog(List<Map> tShirtSizes, List<Map> divisions, List<Map> genders, List<Map> teams) {
+    teams = teams.where((e) => e['team']?.isNotEmpty ?? false).toList();
+    var filteredTshirts = _normalizeAndAggregateSizes(tShirtSizes);
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -333,7 +336,7 @@ class _SearchPageState extends State<SearchPage> {
                 ...divisions.map((e) => Text('${e['division']}: ${e['total']}')).toList(),
                 const SizedBox(height: 16),
                 const Text('T-Shirt Sizes:'),
-                ...tShirtSizes.map((e) => Text('${e['t_shirt']}: ${e['total']}')).toList(),
+                ...filteredTshirts.entries.map((e) => Text('${e.key}: ${e.value}')).toList(),
                 const SizedBox(height: 16),
                 const Text('Teams:'),
                 ...teams.map((e) => Text('${e['team']}: ${e['total']}')).toList(),
@@ -355,6 +358,35 @@ class _SearchPageState extends State<SearchPage> {
       },
     );
   }
+
+  Map<String, int> _normalizeAndAggregateSizes(List<Map> sizes) {
+    Map<String, String> normalizationMap = {
+      'Smal': 'Small',
+      'small': 'Small',
+      'X-Sm': 'X-Small',
+      'Medi': 'Medium',
+      'Larg': 'Large',
+      'large': 'Large',
+      'X-La': 'X-Large',
+      'XX-L': 'XX-Large',
+      'xxlarge': 'XX-Large',
+      'noThankYou': 'No T-Shirt',
+      'No t': 'No T-Shirt',
+    };
+
+    Map<String, int> aggregatedSizes = {};
+
+    for (var size in sizes) {
+      String normalizedSize = normalizationMap[size['t_shirt']] ?? size['t_shirt'];
+      // Use null-aware operators to ensure null-safety
+      int currentValue = aggregatedSizes[normalizedSize] ?? 0;
+      int additionalValue = size['total'] as int? ?? 0; // Cast and ensure not null, defaulting to 0
+      aggregatedSizes[normalizedSize] = currentValue + additionalValue;
+    }
+
+    return aggregatedSizes;
+  }
+
 
 
 }
