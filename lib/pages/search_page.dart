@@ -155,37 +155,41 @@ class _SearchPageState extends State<SearchPage> {
     // Define the sort order based on the _isAscending flag
     String sortOrder = _isAscending ? 'ASC' : 'DESC';
 
-    // Split the query by '/' for multiple terms
+    // Process each query term
     var searchTerms = query.split('/').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
 
-    // Building a combined query for each term
-    var combinedQuery = searchTerms.map((term) {
-      if (term.contains('-')) {
+    // Initialize a list to hold parts of the WHERE clause
+    List<String> whereClauses = [];
+    List<dynamic> whereArgs = [];
+
+    for (var term in searchTerms) {
+      // Check if the term ends with '?'
+      var questionMarks = term.split('?');
+      if (questionMarks.length > 1 && RegExp(r'^\d+$').hasMatch(questionMarks[0])) {
+        // There are '?' characters, adjust the search range
+        int baseNumber = int.parse(questionMarks[0]);
+        int range = questionMarks.length - 1; // Determine the range based on '?' count
+
+        whereClauses.add('(bib BETWEEN ? AND ?)');
+        whereArgs.add(baseNumber - range);
+        whereArgs.add(baseNumber + range);
+      } else if (term.contains('-')) {
         // Handle range within the term
         var parts = term.split('-');
         if (parts.length == 2) {
-          return '(bib BETWEEN ? AND ?)';
+          whereClauses.add('(bib BETWEEN ? AND ?)');
+          whereArgs.addAll([int.tryParse(parts[0].trim()) ?? 0, int.tryParse(parts[1].trim()) ?? 0]);
         }
+      } else {
+        // Handle single bib number or name
+        whereClauses.add('(bib LIKE ? OR name LIKE ?)');
+        whereArgs.addAll([term, '%$term%']);
       }
-      // Handle single bib number or name
-      return '(bib LIKE ? OR name LIKE ?)';
-    }).join(' OR ');
+    }
 
-    if(combinedQuery.isNotEmpty){
-      // Flatten the arguments for the query
-      var whereArgs = searchTerms.expand((term) {
-        if (term.contains('-')) {
-          var parts = term.split('-');
-          if (parts.length == 2) {
-            return [int.tryParse(parts[0].trim()) ?? 0, int.tryParse(parts[1].trim()) ?? 0];
-          }
-        } else if (RegExp(r'^\d+$').hasMatch(term)) {
-          // Ensure bib numbers are passed as integers
-          return [int.tryParse(term),'%$term%'];
-        }
-        return ['%$term%', '%$term%'];
-      }).toList();
+    String combinedQuery = whereClauses.join(' OR ');
 
+    if (combinedQuery.isNotEmpty) {
       results = await db.query(
         'bib_data',
         where: combinedQuery,
@@ -196,12 +200,12 @@ class _SearchPageState extends State<SearchPage> {
       results = await db.query('bib_data', orderBy: 'bib $sortOrder');
     }
 
-
     setState(() {
       _searchResults = results;
     });
     await db.close();
   }
+
 
 
 
