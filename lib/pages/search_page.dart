@@ -314,16 +314,29 @@ class _SearchPageState extends State<SearchPage> {
                       title: Text(result['name']),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_userSettings.fieldVisibility['bib'] == true)
-                            Text('Bib: ${result['bib']}'),
-                          if (_userSettings.fieldVisibility['division'] == true)
-                            Text('Div: ${result['division']}'),
-                          if (_userSettings.fieldVisibility['t_shirt'] == true)
-                            Text('T-Shirt: ${result['t_shirt']}'),
-                          // Add more fields as needed
-                        ],
+                        children: _userSettings.fieldVisibility.entries
+                            .where((entry) => entry.value == true && result.containsKey(entry.key)) // Ensure the field is marked true and exists in result
+                            .map((entry) {
+                          String displayValue = '';
+                          switch (entry.key) {
+                            case 'bib':
+                              displayValue = 'Bib: ${result['bib']}';
+                              break;
+                            case 'division':
+                              displayValue = 'Div: ${result['division']}';
+                              break;
+                            case 't_shirt':
+                              displayValue = 'T-Shirt: ${result['t_shirt']}';
+                              break;
+                          // Add more cases as needed for different fields
+                            default:
+                              displayValue = '${entry.key[0].toUpperCase()}${entry.key.substring(1)}: ${result[entry.key]}';
+                              break;
+                          }
+                          return Text(displayValue);
+                        }).toList(),
                       ),
+
                     );
                   },
                 ),
