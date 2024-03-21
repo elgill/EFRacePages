@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
 import '../models/user_settings.dart';
@@ -38,7 +36,10 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       body: ListView(
         children: <Widget>[
-          SwitchListTile(
+          const ListTile(
+            title: Text('General Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          ),
+/*          SwitchListTile(
             title: const Text('Normalize T-Shirt Sizes'),
             value: _settings.normalizeTShirtSizes,
             onChanged: (bool value) {
@@ -47,21 +48,30 @@ class _SettingsPageState extends State<SettingsPage> {
               });
               _saveSettings();
             },
+          ),*/
+          const ListTile(
+            title: Text('Display Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            subtitle: Text('Customize which fields are visible in the search results.'),
           ),
-        ] +
-            _settings.fieldVisibility.keys.map((String key) {
-              return CheckboxListTile(
-                title: Text(key.toUpperCase()),
-                value: _settings.fieldVisibility[key],
-                onChanged: (bool? value) {
-                  setState(() {
-                    _settings.fieldVisibility[key] = value!;
-                  });
-                  _saveSettings();
-                },
-              );
-            }).toList(),
+          ..._settings.fieldVisibility.keys.map((String key) {
+            return CheckboxListTile(
+              title: Text(_capitalize(key)),
+              value: _settings.fieldVisibility[key],
+              onChanged: (bool? value) {
+                setState(() {
+                  _settings.fieldVisibility[key] = value!;
+                });
+                _saveSettings();
+              },
+            );
+          }).toList(),
+          // Placeholder for future settings categories
+        ],
       ),
     );
+  }
+
+  String _capitalize(String s) {
+    return s[0].toUpperCase() + s.substring(1);
   }
 }
