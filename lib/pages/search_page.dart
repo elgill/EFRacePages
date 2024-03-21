@@ -178,7 +178,7 @@ class _SearchPageState extends State<SearchPage> {
         var parts = term.split('-');
         if (parts.length == 2) {
           whereClauses.add('(bib BETWEEN ? AND ?)');
-          whereArgs.addAll([int.tryParse(parts[0].trim()) ?? 0, int.tryParse(parts[1].trim()) ?? 0]);
+          whereArgs.addAll([int.tryParse(parts[0].trim()) ?? 0, int.tryParse(parts[1].trim()) ?? 9999999]);
         }
       } else {
         // Handle single bib number or name
