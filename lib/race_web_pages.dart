@@ -3,6 +3,7 @@ import 'package:ef_race_pages/pages/registration_page.dart';
 import 'package:ef_race_pages/pages/bib_lookup_page.dart';
 import 'package:ef_race_pages/pages/results_page.dart';
 import 'package:ef_race_pages/pages/search_page.dart';
+import 'package:ef_race_pages/pages/settings_page.dart';
 import 'package:ef_race_pages/race_id_setting_page.dart';
 import 'package:ef_race_pages/services/race_service.dart';
 import 'package:ef_race_pages/services/recent_event_manager.dart';
@@ -149,6 +150,18 @@ class _RaceWebPagesState extends State<RaceWebPages> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_race != null ? _race!.name : "Loading..."),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsPage()),
+              );
+            },
+          ),
+        ],
+
       ),
       drawer: _buildDrawer(),
       body: SafeArea(

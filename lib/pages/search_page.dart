@@ -6,6 +6,9 @@ import 'package:sqflite/sqflite.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser;
 
+import '../models/user_settings.dart';
+import '../services/settings_service.dart';
+
 class SearchPage extends StatefulWidget {
   final String raceId;
 
@@ -20,19 +23,39 @@ class _SearchPageState extends State<SearchPage> {
   bool _isLoading = true;
   bool _isAscending = true;
 
+  late UserSettings _userSettings;
+
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void dispose() {
     _searchController.dispose();
+    SettingsService.removeListener(_settingsChanged);
     super.dispose();
+  }
+
+  void _settingsChanged() {
+    if (mounted) {
+      _loadUserSettings();
+    }
   }
 
   @override
   void initState() {
     super.initState();
+    _loadUserSettings();
     _loadData();
+
+    SettingsService.addListener(_settingsChanged);
   }
+
+  Future<void> _loadUserSettings() async {
+    UserSettings settings = await SettingsService.loadUserSettings();
+    setState(() {
+      _userSettings = settings;
+    });
+  }
+
 
   Future<Database> _openDatabase() async {
     return await openDatabase(
@@ -292,9 +315,13 @@ class _SearchPageState extends State<SearchPage> {
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Bib: ${result['bib']}'),
-                          Text('Div: ${result['division']}'),
-                          Text('T-Shirt: ${result['t_shirt']}'), // Display t-shirt size
+                          if (_userSettings.fieldVisibility['bib'] == true)
+                            Text('Bib: ${result['bib']}'),
+                          if (_userSettings.fieldVisibility['division'] == true)
+                            Text('Div: ${result['division']}'),
+                          if (_userSettings.fieldVisibility['t_shirt'] == true)
+                            Text('T-Shirt: ${result['t_shirt']}'),
+                          // Add more fields as needed
                         ],
                       ),
                     );
