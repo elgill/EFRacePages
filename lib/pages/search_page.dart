@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
@@ -203,6 +204,18 @@ class _SearchPageState extends State<SearchPage> {
           whereClauses.add('(bib BETWEEN ? AND ?)');
           whereArgs.addAll([int.tryParse(parts[0].trim()) ?? 0, int.tryParse(parts[1].trim()) ?? 9999999]);
         }
+      } else if (term.contains(':')){
+        var parts = term.split(':');
+        if (parts.length == 2) {
+          String field = parts[0].trim().toLowerCase();
+          String searchterm = parts[1].trim();
+
+          // Validate the field is a valid searchable field
+          if (_userSettings.fieldVisibility.containsKey(field)) {
+            whereClauses.add('($field LIKE ?)');
+            whereArgs.add('%$searchterm%');
+          }
+        }
       } else {
         // Handle single bib number or name
         whereClauses.add('(bib LIKE ? OR name LIKE ?)');
@@ -211,6 +224,9 @@ class _SearchPageState extends State<SearchPage> {
     }
 
     String combinedQuery = whereClauses.join(' OR ');
+
+    // Uncomment for debugging
+    //log('CombinedQuery: $combinedQuery\n$whereArgs');
 
     if (combinedQuery.isNotEmpty) {
       results = await db.query(
@@ -317,22 +333,7 @@ class _SearchPageState extends State<SearchPage> {
                         children: _userSettings.fieldVisibility.entries
                             .where((entry) => entry.value == true && result.containsKey(entry.key)) // Ensure the field is marked true and exists in result
                             .map((entry) {
-                          String displayValue = '';
-                          switch (entry.key) {
-                            case 'bib':
-                              displayValue = 'Bib: ${result['bib']}';
-                              break;
-                            case 'division':
-                              displayValue = 'Div: ${result['division']}';
-                              break;
-                            case 't_shirt':
-                              displayValue = 'T-Shirt: ${result['t_shirt']}';
-                              break;
-                          // Add more cases as needed for different fields
-                            default:
-                              displayValue = '${entry.key[0].toUpperCase()}${entry.key.substring(1)}: ${result[entry.key]}';
-                              break;
-                          }
+                          String displayValue = '${entry.key[0].toUpperCase()}${entry.key.substring(1)}: ${result[entry.key]}';
                           return Text(displayValue);
                         }).toList(),
                       ),
