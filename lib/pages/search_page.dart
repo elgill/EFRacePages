@@ -187,24 +187,29 @@ class _SearchPageState extends State<SearchPage> {
     List<dynamic> whereArgs = [];
 
     for (var term in searchTerms) {
-      // Check if the term ends with '?'
+      bool isNot = term.startsWith('!');
+      if (isNot) {
+        term = term.substring(1); // Remove the '!' prefix
+      }
       var questionMarks = term.split('?');
       if (questionMarks.length > 1 && RegExp(r'^\d+$').hasMatch(questionMarks[0])) {
         // There are '?' characters, adjust the search range
         int baseNumber = int.parse(questionMarks[0]);
         int range = questionMarks.length - 1; // Determine the range based on '?' count
 
-        whereClauses.add('(bib BETWEEN ? AND ?)');
-        whereArgs.add(baseNumber - range);
-        whereArgs.add(baseNumber + range);
+          String clause = '(bib BETWEEN ? AND ?)';
+          whereClauses.add(isNot ? '(NOT $clause)' : clause);
+          whereArgs.add(baseNumber - range);
+          whereArgs.add(baseNumber + range);
       } else if (term.contains('-')) {
         // Handle range within the term
         var parts = term.split('-');
         if (parts.length == 2) {
-          whereClauses.add('(bib BETWEEN ? AND ?)');
+          String clause = '(bib BETWEEN ? AND ?)';
+          whereClauses.add(isNot ? '(NOT $clause)' : clause);
           whereArgs.addAll([int.tryParse(parts[0].trim()) ?? 0, int.tryParse(parts[1].trim()) ?? 9999999]);
         }
-      } else if (term.contains(':')){
+      } else if (term.contains(':')) {
         var parts = term.split(':');
         if (parts.length == 2) {
           String field = parts[0].trim().toLowerCase();
@@ -212,13 +217,14 @@ class _SearchPageState extends State<SearchPage> {
 
           // Validate the field is a valid searchable field
           if (_userSettings.fieldVisibility.containsKey(field)) {
-            whereClauses.add('($field LIKE ?)');
+            String clause = '($field LIKE ?)';
+            whereClauses.add(isNot ? '(NOT $clause)' : clause);
             whereArgs.add('%$searchterm%');
           }
         }
       } else {
-        // Handle single bib number or name
-        whereClauses.add('(bib LIKE ? OR name LIKE ?)');
+        String clause = '(bib LIKE ? OR name LIKE ?)';
+        whereClauses.add(isNot ? '(NOT $clause)' : clause);
         whereArgs.addAll([term, '%$term%']);
       }
     }
