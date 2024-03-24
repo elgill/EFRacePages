@@ -85,7 +85,6 @@ class _SearchPageState extends State<SearchPage> {
 
 
   Future<List<Map<String, dynamic>>> scrapeDataFromWebPage(String raceId) async {
-    // Replace with the actual URL, possibly using the raceId
     final String url = 'https://www.elitefeats.com/Bibs/?ID=$raceId';
 
     // Fetch the webpage
@@ -160,8 +159,9 @@ class _SearchPageState extends State<SearchPage> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('An error occurred: $e'),
+          const SnackBar(
+              // Remind users that this won't work pre-packet pickup
+              content: Text('Failed to parse data. Are bibs posted to bib lookup?'),
               backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
           )
