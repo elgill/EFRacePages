@@ -179,60 +179,68 @@ class _SearchPageState extends State<SearchPage> {
     // Define the sort order based on the _isAscending flag
     String sortOrder = _isAscending ? 'ASC' : 'DESC';
 
-    // Process each query term
-    var searchTerms = query.split('/').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    // Split the query into AND parts
+    var andParts = query.split('&').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
 
-    // Initialize a list to hold parts of the WHERE clause
+    // Initialize a list to hold parts of the WHERE clause and the corresponding arguments
     List<String> whereClauses = [];
     List<dynamic> whereArgs = [];
 
-    for (var term in searchTerms) {
-      bool isNot = term.startsWith('!');
-      if (isNot) {
-        term = term.substring(1); // Remove the '!' prefix
-      }
-      var questionMarks = term.split('?');
-      if (questionMarks.length > 1 && RegExp(r'^\d+$').hasMatch(questionMarks[0])) {
-        // There are '?' characters, adjust the search range
-        int baseNumber = int.parse(questionMarks[0]);
-        int range = questionMarks.length - 1; // Determine the range based on '?' count
+    // Process each AND part
+    for (var andPart in andParts) {
+      List<String> orClauses = [];
 
+      // Further split each AND part into OR parts
+      var orParts = andPart.split('/').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+      for (var term in orParts) {
+        bool isNot = term.startsWith('!');
+        if (isNot) {
+          term = term.substring(1); // Remove the '!' prefix
+        }
+        var questionMarks = term.split('?');
+        if (questionMarks.length > 1 && RegExp(r'^\d+$').hasMatch(questionMarks[0])) {
+          int baseNumber = int.parse(questionMarks[0]);
+          int range = questionMarks.length - 1;
           String clause = '(bib BETWEEN ? AND ?)';
-          whereClauses.add(isNot ? '(NOT $clause)' : clause);
+          orClauses.add(isNot ? '(NOT $clause)' : clause);
           whereArgs.add(baseNumber - range);
           whereArgs.add(baseNumber + range);
-      } else if (term.contains('-')) {
-        // Handle range within the term
-        var parts = term.split('-');
-        if (parts.length == 2) {
-          String clause = '(bib BETWEEN ? AND ?)';
-          whereClauses.add(isNot ? '(NOT $clause)' : clause);
-          whereArgs.addAll([int.tryParse(parts[0].trim()) ?? 0, int.tryParse(parts[1].trim()) ?? 9999999]);
-        }
-      } else if (term.contains(':')) {
-        var parts = term.split(':');
-        if (parts.length == 2) {
-          String field = parts[0].trim().toLowerCase();
-          String searchterm = parts[1].trim();
-
-          // Validate the field is a valid searchable field
-          if (_userSettings.fieldVisibility.containsKey(field)) {
-            String clause = '($field LIKE ?)';
-            whereClauses.add(isNot ? '(NOT $clause)' : clause);
-            whereArgs.add('%$searchterm%');
+        } else if (term.contains('-')) {
+          var parts = term.split('-');
+          if (parts.length == 2) {
+            String clause = '(bib BETWEEN ? AND ?)';
+            orClauses.add(isNot ? '(NOT $clause)' : clause);
+            whereArgs.addAll([int.tryParse(parts[0].trim()) ?? 0, int.tryParse(parts[1].trim()) ?? 9999999]);
           }
+        } else if (term.contains(':')) {
+          var parts = term.split(':');
+          if (parts.length == 2) {
+            String field = parts[0].trim().toLowerCase();
+            String searchterm = parts[1].trim();
+            if (_userSettings.fieldVisibility.containsKey(field)) {
+              String clause = '($field LIKE ?)';
+              orClauses.add(isNot ? '(NOT $clause)' : clause);
+              whereArgs.add('%$searchterm%');
+            }
+          }
+        } else {
+          String clause = '(bib LIKE ? OR name LIKE ?)';
+          orClauses.add(isNot ? '(NOT $clause)' : clause);
+          whereArgs.addAll([term, '%$term%']);
         }
-      } else {
-        String clause = '(bib LIKE ? OR name LIKE ?)';
-        whereClauses.add(isNot ? '(NOT $clause)' : clause);
-        whereArgs.addAll([term, '%$term%']);
+      }
+
+      // Combine the OR clauses using OR logic
+      if (orClauses.isNotEmpty) {
+        whereClauses.add('(${orClauses.join(' OR ')})');
       }
     }
 
-    String combinedQuery = whereClauses.join(' OR ');
+    // Combine the AND parts using AND logic
+    String combinedQuery = whereClauses.join(' AND ');
 
     // Uncomment for debugging
-    //log('CombinedQuery: $combinedQuery\n$whereArgs');
+    log('CombinedQuery: $combinedQuery\n$whereArgs');
 
     if (combinedQuery.isNotEmpty) {
       results = await db.query(
