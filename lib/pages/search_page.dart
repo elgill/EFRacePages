@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
@@ -144,28 +145,24 @@ class _SearchPageState extends State<SearchPage> {
                 behavior: SnackBarBehavior.floating,
             )
         );
-        _searchDatabase('');
+        _searchDatabase(_searchController.text);
       } else {
         if (!mounted) return;
 
-        // No data scraped, possibly due to network error
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Failed to load data. Please check your internet connection.'),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-            )
-        );
+        _showSnackBarWithMessage('No data available to update. Please try again later.', Colors.orange);
       }
+    } on SocketException {
+      _showSnackBarWithMessage('No Internet connection. Please check your connection and try again.', Colors.red);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              // Remind users that this won't work pre-packet pickup
-              content: Text('Failed to parse data. Are bibs posted to bib lookup?'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-          )
-      );
+      // The catch block now handles both failed HTTP requests and parsing errors
+      log('Exception $e');
+      if (e is HttpException) {
+        // Handle HTTP errors specifically
+        _showSnackBarWithMessage('Failed to load data. Please check your internet connection.', Colors.red);
+      } else {
+        // Handle parsing and other types of errors
+        _showSnackBarWithMessage('Failed to parse data. Are bibs posted to bib lookup?', Colors.red);
+      }
     } finally {
       setState(() => _isLoading = false);
     }
@@ -446,6 +443,16 @@ class _SearchPageState extends State<SearchPage> {
     return aggregatedSizes;
   }
 
+  void _showSnackBarWithMessage(String message, Color backgroundColor) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: backgroundColor,
+          behavior: SnackBarBehavior.floating,
+        )
+    );
+  }
 
 
 }
