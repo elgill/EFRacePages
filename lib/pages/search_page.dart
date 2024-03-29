@@ -46,6 +46,7 @@ class _SearchPageState extends State<SearchPage> {
   void initState() {
     super.initState();
     _loadUserSettings();
+    clearDbData();
     _loadData();
 
     SettingsService.addListener(_settingsChanged);
@@ -268,6 +269,15 @@ class _SearchPageState extends State<SearchPage> {
       for (var row in data) {
         await txn.insert('bib_data', row, conflictAlgorithm: ConflictAlgorithm.replace);
       }
+    });
+    await db.close();
+  }
+
+  // Function to store data in SQLite database
+  Future<void> clearDbData() async {
+    final db = await _openDatabase();
+    await db.transaction((txn) async {
+      await txn.delete('bib_data'); // Clear the table
     });
     await db.close();
   }
