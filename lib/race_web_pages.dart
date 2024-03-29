@@ -52,7 +52,7 @@ class _RaceWebPagesState extends State<RaceWebPages> {
       future: getRecentRaces(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return Drawer(child: const Center(child: CircularProgressIndicator()));
+          return const Drawer(child: Center(child: CircularProgressIndicator()));
         }
 
         List<String> recentRaceIds = snapshot.data!;
@@ -60,7 +60,7 @@ class _RaceWebPagesState extends State<RaceWebPages> {
           future: Future.wait(recentRaceIds.map((id) => RaceService.getRace(id)).toList()),
           builder: (context, raceSnapshot) {
             if (!raceSnapshot.hasData) {
-              return Drawer(child: const Center(child: CircularProgressIndicator()));
+              return const Drawer(child: Center(child: CircularProgressIndicator()));
             }
 
             List<Race> recentRaces = raceSnapshot.data!.whereType<Race>().toList();
@@ -76,19 +76,31 @@ class _RaceWebPagesState extends State<RaceWebPages> {
                     title: Text("${race.name} (${race.id})"),
                     trailing: IconButton(
                       icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        removeRaceFromRecentList(race.id);
+                      onPressed: () async {
+                        await removeRaceFromRecentList(race.id);
 
-                        if(race.id == widget.raceId){
-                          clearCurrentRace();
-                          Navigator.pop(context);  // Close the drawer
+                        if (race.id == widget.raceId) {
+                          // Remove current race and check for other available races
+                          List<String> updatedRecentRaces = await getRecentRaces(); // Assuming this method updates itself after removeRaceFromRecentList is called
 
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const RaceIDSettingPage(),
-                            ),
-                          );
+                          if (updatedRecentRaces.isNotEmpty) {
+                            // If there are other races, switch to the first one in the updated list
+                            String newRaceId = updatedRecentRaces.first;
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RaceWebPages(raceId: newRaceId),
+                              ),
+                            );
+                          } else {
+                            // If no other races, navigate to race selection page
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const RaceIDSettingPage(),
+                              ),
+                            );
+                          }
                         } else {
                           setState(() {});
                         }// Refresh UI
