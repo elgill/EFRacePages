@@ -8,11 +8,10 @@ class BaseWebViewPage extends StatefulWidget {
   const BaseWebViewPage({Key? key, required this.initialUrl}) : super(key: key);
 
   @override
-  _BaseWebViewPageState createState() => _BaseWebViewPageState();
+  BaseWebViewPageState createState() => BaseWebViewPageState();
 }
 
-
-class _BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliveClientMixin {
+class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliveClientMixin {
   bool _isLoading = true;
   late WebViewController _controller;
   String? _currentUrl;
@@ -46,6 +45,7 @@ class _BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAli
             setState(() {
               _isLoading = false;
             });
+            onPageFinished(url, _controller);
           },
         ),
         if (_isLoading)
@@ -76,7 +76,11 @@ class _BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAli
     );
   }
 
-  _showQrCode(BuildContext context) {
+  void onPageFinished(String url, WebViewController controller) {
+    // This can be overridden by subclasses to perform actions after the page finishes loading.
+  }
+
+  void _showQrCode(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
@@ -93,9 +97,7 @@ class _BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAli
             size: 200.0,
             foregroundColor: !isDarkMode ? Colors.black : Colors.white,
           ),
-
         ),
-
         actions: [
           TextButton(
             child: const Text("Close"),
@@ -108,5 +110,3 @@ class _BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAli
     );
   }
 }
-
-
