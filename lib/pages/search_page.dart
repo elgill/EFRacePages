@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:http/http.dart' as http;
@@ -46,7 +47,7 @@ class _SearchPageState extends State<SearchPage> {
   void initState() {
     super.initState();
     _loadUserSettings();
-    clearDbData();
+    _checkAndClearDbIfNeeded();
     _loadData();
 
     SettingsService.addListener(_settingsChanged);
@@ -273,6 +274,25 @@ class _SearchPageState extends State<SearchPage> {
     await db.close();
   }
 
+  Future<void> _checkAndClearDbIfNeeded() async {
+    final prefs = await SharedPreferences.getInstance();
+    final previousRaceId = prefs.getString('previous_race_id') ?? '';
+
+    log('Previous Race ID: $previousRaceId');
+    log('Current Race ID: ${widget.raceId}');
+
+    if (previousRaceId != widget.raceId) {
+      log('Race ID has changed. Clearing database...');
+      await clearDbData();
+      await prefs.setString('previous_race_id', widget.raceId);
+      log('Database cleared and new Race ID stored.');
+    } else {
+      log('Race ID is the same. No need to clear database.');
+      _searchDatabase(_searchController.text);
+    }
+  }
+
+
   // Function to store data in SQLite database
   Future<void> clearDbData() async {
     final db = await _openDatabase();
@@ -294,9 +314,7 @@ class _SearchPageState extends State<SearchPage> {
         onTap: () {
           FocusScope.of(context).unfocus(); // Unfocus text field when tapping outside
         },
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
+        child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -334,6 +352,9 @@ class _SearchPageState extends State<SearchPage> {
                 ],
               ),
             ),
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Container(),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text('Results: ${_searchResults.length}'),
