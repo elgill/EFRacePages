@@ -22,7 +22,7 @@ Future<List<Race>> fetchRaces() async {
           name = "★ $name";
         }
 
-        var id = section.querySelector('a[href^="../race-results.asp?ID="]')?.attributes['href']?.split('=').last;
+        var id = section.querySelector('a[href^="../race-results/?ID="]')?.attributes['href']?.split('=').last;
 
         if (id != null && date != null && location != null && name != null) {
           Race race= Race(id: id, date: date, location: location, name: name);
