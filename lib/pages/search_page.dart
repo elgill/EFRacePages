@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:http/http.dart' as http;
-import 'package:html/parser.dart' as parser;
 
 import '../models/user_settings.dart';
 import '../services/settings_service.dart';
@@ -88,41 +87,48 @@ class _SearchPageState extends State<SearchPage> {
 
 
   Future<List<Map<String, dynamic>>> scrapeDataFromWebPage(String raceId) async {
-    final String url = 'https://www.elitefeats.com/Bibs/?ID=$raceId';
+    final String url = 'https://www.elitefeats.com/Bibs/?ID=$raceId&csv=yesplease';
 
-    // Fetch the webpage
     final response = await http.get(Uri.parse(url));
 
     // Check for response status
     if (response.statusCode == 200) {
-      // Parse the HTML
-      final document = parser.parse(utf8.decode(response.bodyBytes));
+      final csvData = utf8.decode(response.bodyBytes);
 
-      // Find the table with the runner information
-      final table = document.querySelector('table'); // Adjust the selector as needed
+      final lines = LineSplitter.split(csvData).toList();
 
-      // Iterate over the rows in the table and extract data
+      //Lets ignore these for now
+      final headers = lines.first.split(',');
+      lines.removeAt(0);
+
       List<Map<String, dynamic>> runners = [];
-      for (var row in table!.querySelectorAll('tr')) {
-        // Extract data from each cell
-        final cells = row.querySelectorAll('td').map((cell) => cell.text.trim()).toList();
 
-        // Add the runner data to the list, ensuring there are cells (to skip headers)
-        if (cells.isNotEmpty) {
-          runners.add({
-            'bib': cells[0],
-            'name': cells[1],
-            'age': cells[2],
-            'gender': cells[3],
-            'city': cells[4],
-            'state': cells[5],
-            'division': cells[6],
-            'team': cells[7],
-            't_shirt': cells[8],
-            'extra': cells[9],
-            'status': cells[10],
-          });
+      for (var line in lines) {
+        final fields = line.split(',');
+
+        if (fields.length != headers.length) {
+          // Skip this line as it's malformed
+          log('Skipping malformed line: $line');
+          continue;
         }
+
+        final runnerData = {
+          'bib': int.tryParse(fields[0]) ?? 0,
+          'name': '${fields[2]}, ${fields[1]}', // Last, First
+          'gender': fields[3],
+          'age': int.tryParse(fields[4]) ?? 0,
+          'team': fields[5],
+          'division': fields[6],
+          't_shirt': fields[7],
+          'city': fields[8],
+          'state': fields[9],
+          // Adding empty or default values for fields not present in CSV
+          'status': '',
+          'extra': '',
+        };
+
+        // Add the runner data to the list
+        runners.add(runnerData);
       }
 
       return runners;
