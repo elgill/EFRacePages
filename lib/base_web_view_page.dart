@@ -98,7 +98,7 @@ class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliv
               onPressed: () {
                 _controller.loadUrl(widget.initialUrl);
               },
-              child: const Icon(Icons.refresh),
+              child: const Icon(Icons.home),
             ),
           ),
           Positioned(
