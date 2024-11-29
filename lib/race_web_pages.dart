@@ -26,11 +26,13 @@ class _RaceWebPagesState extends State<RaceWebPages> {
   final PageController _pageController = PageController();
 
   Race? _race;
+  String _registrationUrl = 'about:blank'; //placeholder
+  bool _isLoading = true;  // Add loading state
 
   @override
   void initState() {
     super.initState();
-    _fetchRace();
+    _fetchRaceData();
   }
 
   @override
@@ -40,11 +42,19 @@ class _RaceWebPagesState extends State<RaceWebPages> {
     super.dispose();
   }
 
-  _fetchRace() async {
+  Future<void> _fetchRaceData() async {
     Race? fetchedRace = await RaceService.getRace(widget.raceId);
-    setState(() {
-      _race = fetchedRace;
-    });
+    String? registrationUrl = fetchedRace?.registrationUrl ??
+        await RaceService.getRegistrationUrl(widget.raceId);
+
+    if (mounted) {
+      setState(() {
+        _race = fetchedRace;
+        _registrationUrl = registrationUrl ??
+            "about:blank";
+        _isLoading = false;
+      });
+    }
   }
 
   Widget _buildDrawer() {
@@ -177,12 +187,14 @@ class _RaceWebPagesState extends State<RaceWebPages> {
       ),
       drawer: _buildDrawer(),
       body: SafeArea(
-        child: PageView.builder(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : PageView.builder(
           controller: _pageController,
           onPageChanged: (index) => _currentIndexNotifier.value = index,
           physics: const NeverScrollableScrollPhysics(),
           itemBuilder: (context, index) {
-            if (index == 0) return RegistrationPage(raceId: widget.raceId);
+            if (index == 0) return RegistrationPage(raceId: widget.raceId, initialUrl: _registrationUrl);
             if (index == 1) return BibLookupPage(raceId: widget.raceId);
             if (index == 2) return BibReservePage(raceId: widget.raceId);
             if (index == 3) return ResultsPage(raceId: widget.raceId);

@@ -22,10 +22,12 @@ Future<List<Race>> fetchRaces() async {
           name = "★ $name";
         }
 
+        var registrationUrl = section.querySelector('a')?.attributes['href'];
+
         var id = section.querySelector('a[href^="../race-results/?ID="]')?.attributes['href']?.split('=').last;
 
         if (id != null && date != null && location != null && name != null) {
-          Race race= Race(id: id, date: date, location: location, name: name);
+          Race race= Race(id: id, date: date, location: location, name: name, registrationUrl: registrationUrl);
           races.add(race);
           await RaceService.saveRace(race);
 
