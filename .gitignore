@@ -882,6 +882,9 @@ DerivedData/
 *.perspectivev3
 !default.perspectivev3
 
+#Utils
+file-condenser.py
+condensed_files.txt
 
 ### Flutter Generated Exceptions
 
