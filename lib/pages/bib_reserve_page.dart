@@ -19,9 +19,9 @@ class _BibReservePageState extends BaseWebViewPageState {
 
   @override
   void onPageFinished(String url, WebViewController controller) {
-    super.onPageFinished(url,controller);
+    super.onPageFinished(url, controller);
     // Inject JavaScript code to set the value of the race ID input element.
     final script = "document.getElementById('txtUserId').value = '$raceId';";
-    controller.runJavascript(script);
+    controller.runJavaScript(script);
   }
 }
