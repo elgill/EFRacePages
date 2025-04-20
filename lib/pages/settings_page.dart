@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../models/user_settings.dart';
 import '../services/settings_service.dart';
@@ -28,6 +29,33 @@ class _SettingsPageState extends State<SettingsPage> {
     await SettingsService.saveUserSettings(_settings);
   }
 
+  // Add this method to clear cookies
+  _clearCookies() async {
+    try {
+      await WebViewCookieManager().clearCookies();
+      if (mounted) {
+        // TODO: fix error here
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cookies cleared successfully'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to clear cookies: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,16 +67,13 @@ class _SettingsPageState extends State<SettingsPage> {
           const ListTile(
             title: Text('General Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           ),
-/*          SwitchListTile(
-            title: const Text('Normalize T-Shirt Sizes'),
-            value: _settings.normalizeTShirtSizes,
-            onChanged: (bool value) {
-              setState(() {
-                _settings.normalizeTShirtSizes = value;
-              });
-              _saveSettings();
-            },
-          ),*/
+          // Add the cookie clearing button here
+          ListTile(
+            title: const Text('Clear Browser Cookies'),
+            subtitle: const Text('Clear stored website data and cookies'),
+            trailing: const Icon(Icons.delete),
+            onTap: _clearCookies,
+          ),
           const ListTile(
             title: Text('Display Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             subtitle: Text('Customize which fields are visible in the search results.'),
@@ -65,7 +90,6 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             );
           }).toList(),
-          // Placeholder for future settings categories
         ],
       ),
     );
