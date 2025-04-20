@@ -1,8 +1,8 @@
+import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter/gestures.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class DragGesturePullToRefresh extends VerticalDragGestureRecognizer {
   static const int exceedsLoadingTime = 3000;
@@ -13,14 +13,13 @@ class DragGesturePullToRefresh extends VerticalDragGestureRecognizer {
   // loading
   Completer<void> completer = Completer<void>();
   late int msWaitToRestart;
-  int msLoading = 0;
+  int  msLoading = 0;
   bool isLoading = true;
-  Timer? _timeoutTimer;
 
   // drag
-  int dragStartYDiff = 0;
+  int    dragStartYDiff = 0;
   double dragHeightEnd = 200;
-  bool dragStarted = false;
+  bool   dragStarted = false;
   double dragDistance = 0;
 
   @override
@@ -32,44 +31,20 @@ class DragGesturePullToRefresh extends VerticalDragGestureRecognizer {
   void _clearDrag() {
     dragStarted = false;
     dragDistance = 0;
-    _cancelTimeoutTimer();
-  }
-
-  void _cancelTimeoutTimer() {
-    _timeoutTimer?.cancel();
-    _timeoutTimer = null;
   }
 
   /// [context] RefreshIndicator
-  DragGesturePullToRefresh setContext(BuildContext context) {
-    _context = context;
-    return this;
-  }
-
+  DragGesturePullToRefresh setContext(BuildContext context) { _context = context; return this; }
   /// [controller] WebViewController
-  DragGesturePullToRefresh setController(WebViewController controller) {
-    _controller = controller;
-    return this;
-  }
+  DragGesturePullToRefresh setController(WebViewController controller) { _controller = controller; return this; }
 
   /// [dragHeightEnd] End height for starting the refresh
-  DragGesturePullToRefresh setDragHeightEnd(double value) {
-    dragHeightEnd = value;
-    return this;
-  }
-
+  DragGesturePullToRefresh setDragHeightEnd(double value)      { dragHeightEnd = value;   return this; }
   /// [msWaitToRestart] milliseconds to reallow pull to refresh if the website
   /// didn't load in msWaitToRestart time
-  DragGesturePullToRefresh setWaitToRestart(int value) {
-    msWaitToRestart = value;
-    return this;
-  }
-
+  DragGesturePullToRefresh setWaitToRestart(int value)  { msWaitToRestart = value; return this; }
   /// [dragStartYDiff] add some offset as page top is not always obviously page top, e.g. 10
-  DragGesturePullToRefresh setDragStartYDiff(int value) {
-    dragStartYDiff = value;
-    return this;
-  }
+  DragGesturePullToRefresh setDragStartYDiff(int value) { dragStartYDiff = value;  return this; }
 
   /// start refresh
   Future<void> refresh() {
@@ -79,15 +54,6 @@ class DragGesturePullToRefresh extends VerticalDragGestureRecognizer {
     completer = Completer<void>();
     started();
     _controller.reload();
-
-    // Set a timeout to force complete the refresh if it takes too long
-    _timeoutTimer = Timer(Duration(milliseconds: msWaitToRestart), () {
-      if (!completer.isCompleted) {
-        completer.complete();
-        finished();
-      }
-    });
-
     return completer.future;
   }
 
@@ -101,8 +67,6 @@ class DragGesturePullToRefresh extends VerticalDragGestureRecognizer {
   void finished() {
     msLoading = 0;
     isLoading = false;
-    _cancelTimeoutTimer();
-
     // hide the RefreshIndicator
     if (!completer.isCompleted) {
       completer.complete();
@@ -116,8 +80,8 @@ class DragGesturePullToRefresh extends VerticalDragGestureRecognizer {
         maxScrollExtent: maxScrollExtent,
         pixels: pixels,
         viewportDimension: viewportDimension,
-        axisDirection: axisDirection,
-        devicePixelRatio: 1);
+        axisDirection: axisDirection, devicePixelRatio: 1
+    );
   }
 
   /// [msWaitToRestart] milliseconds to reallow pull to refresh if the website
@@ -137,11 +101,10 @@ class DragGesturePullToRefresh extends VerticalDragGestureRecognizer {
           dragStarted = true;
           dragDistance = 0;
           ScrollStartNotification(
-              metrics: _getMetrics(
-                  0, dragHeightEnd, 0, dragHeightEnd, AxisDirection.down),
+              metrics: _getMetrics(0, dragHeightEnd, 0, dragHeightEnd, AxisDirection.down),
               dragDetails: dragDetails,
-              context: _context)
-              .dispatch(_context);
+              context: _context
+          ).dispatch(_context);
         }
       }
     };
@@ -149,16 +112,20 @@ class DragGesturePullToRefresh extends VerticalDragGestureRecognizer {
       if (dragStarted) {
         double dy = dragDetails.delta.dy;
         dragDistance += dy;
-        ScrollUpdateNotification(
-            metrics: _getMetrics(
-                dy > 0 ? 0 : dragDistance,
-                dragHeightEnd,
-                dy > 0 ? (-1) * dy : dragDistance,
-                dragHeightEnd,
-                dragDistance < 0 ? AxisDirection.up : AxisDirection.down),
-            context: _context,
-            scrollDelta: (-1) * dy)
-            .dispatch(_context);
+
+        if (dragDistance > 0) {
+          ScrollUpdateNotification(
+              metrics: _getMetrics(
+                  dy > 0 ? 0 : dragDistance,
+                  dragHeightEnd,
+                  dy > 0 ? (-1) * dy : dragDistance,
+                  dragHeightEnd,
+                  dragDistance < 0 ? AxisDirection.up : AxisDirection.down),
+              context: _context,
+              scrollDelta: (-1) * dy)
+              .dispatch(_context);
+        }
+
         if (dragDistance < 0) {
           _clearDrag();
         }
@@ -167,29 +134,21 @@ class DragGesturePullToRefresh extends VerticalDragGestureRecognizer {
     onEnd = (DragEndDetails dragDetails) {
       if (dragStarted) {
         ScrollEndNotification(
-            metrics: _getMetrics(0, dragHeightEnd, dragDistance, dragHeightEnd,
-                AxisDirection.down),
-            context: _context)
-            .dispatch(_context);
+            metrics: _getMetrics(0, dragHeightEnd, dragDistance, dragHeightEnd, AxisDirection.down),
+            context: _context
+        ).dispatch(_context);
         _clearDrag();
       }
     };
     onCancel = () {
       if (dragStarted) {
         ScrollUpdateNotification(
-            metrics: _getMetrics(
-                0, dragHeightEnd, 1, dragHeightEnd, AxisDirection.up),
+            metrics: _getMetrics(0, dragHeightEnd, 1, dragHeightEnd, AxisDirection.up),
             context: _context,
-            scrollDelta: 0)
-            .dispatch(_context);
+            scrollDelta: 0
+        ).dispatch(_context);
         _clearDrag();
       }
     };
-  }
-
-  @override
-  void dispose() {
-    _cancelTimeoutTimer();
-    super.dispose();
   }
 }
