@@ -1,9 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-
-import 'gestures/drag_gesture_pull_to_refresh.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 class BaseWebViewPage extends StatefulWidget {
   final String initialUrl;
@@ -16,11 +13,9 @@ class BaseWebViewPage extends StatefulWidget {
 
 class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliveClientMixin {
   bool _isLoading = true;
-  late WebViewController _controller;
+  late InAppWebViewController _controller;
   String? _currentUrl;
-  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
-  late DragGesturePullToRefresh _dragGesturePullToRefresh;
-  bool _isDisposed = false;
+  late PullToRefreshController _pullToRefreshController;
 
   @override
   bool get wantKeepAlive => true;
@@ -28,104 +23,88 @@ class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliv
   @override
   void initState() {
     super.initState();
-    _dragGesturePullToRefresh = DragGesturePullToRefresh(); // Here
 
-    // Initialize the WebViewController
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageStarted: (url) {
-            _safeSetState(() {
-              _isLoading = true;
-              _currentUrl = url;
-            });
-            _dragGesturePullToRefresh.started(); // Here
-          },
-          onPageFinished: (url) {
-            _safeSetState(() {
-              _isLoading = false;
-            });
-            _dragGesturePullToRefresh.finished();
-            onPageFinished(url, _controller);
-          },
-          onWebResourceError: (WebResourceError error) {
-            // Hide RefreshIndicator for page reload if showing
-            _dragGesturePullToRefresh.finished(); // Here
-          },
-        ),
-      )
-      ..loadRequest(Uri.parse(widget.initialUrl));
-
-    _dragGesturePullToRefresh // Here
-        .setController(_controller)
-        .setDragHeightEnd(200)
-        .setDragStartYDiff(10)
-        .setWaitToRestart(3000);
+    _pullToRefreshController = PullToRefreshController(
+      settings: PullToRefreshSettings(
+        color: Colors.blue,
+      ),
+      onRefresh: () async {
+        // Explicitly reload the current page
+        await _controller.reload();
+      },
+    );
   }
 
   @override
   void dispose() {
-    _isDisposed = true;
-    _dragGesturePullToRefresh.dispose();
     super.dispose();
-  }
-
-  void _safeSetState(VoidCallback fn) {
-    if (mounted && !_isDisposed) {
-      setState(fn);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
-    return RefreshIndicator(
-      key: _refreshIndicatorKey,
-      triggerMode: RefreshIndicatorTriggerMode.onEdge,
-      onRefresh: _dragGesturePullToRefresh.refresh,
-      child: Stack(
-        children: [
-          Builder(builder: (context) {
-            _dragGesturePullToRefresh.setContext(context);
-
-            return WebViewWidget(
-              controller: _controller,
-              gestureRecognizers: {Factory(() => _dragGesturePullToRefresh)},
-            );
-
-          }),
-          if (_isLoading)
-            const Center(child: CircularProgressIndicator()),
-          Positioned(
-            bottom: 10,
-            left: 10,
-            child: FloatingActionButton(
-              heroTag: null,
-              onPressed: () {
-                _controller.loadRequest(Uri.parse(widget.initialUrl));
-              },
-              child: const Icon(Icons.home),
-            ),
+    return Stack(
+      children: [
+        InAppWebView(
+          initialUrlRequest: URLRequest(url: WebUri(widget.initialUrl)),
+          pullToRefreshController: _pullToRefreshController,
+          onWebViewCreated: (controller) {
+            _controller = controller;
+          },
+          onLoadStart: (controller, url) {
+            setState(() {
+              _isLoading = true;
+              _currentUrl = url?.toString();
+            });
+          },
+          onLoadStop: (controller, url) async {
+            setState(() {
+              _isLoading = false;
+            });
+            _pullToRefreshController.endRefreshing();
+            onPageFinished(url?.toString() ?? '', controller);
+          },
+          onReceivedError: (controller, request, error) {
+            _pullToRefreshController.endRefreshing();
+          },
+          initialSettings: InAppWebViewSettings(
+            useShouldOverrideUrlLoading: false,
+            mediaPlaybackRequiresUserGesture: false,
+            allowsInlineMediaPlayback: true,
+            iframeAllow: "camera; microphone",
+            iframeAllowFullscreen: true,
           ),
-          Positioned(
-            bottom: 10,
-            right: 10,
-            child: FloatingActionButton(
-              heroTag: null,
-              onPressed: () {
-                _showQrCode(context);
-              },
-              child: const Icon(Icons.qr_code),
-            ),
+        ),
+        if (_isLoading)
+          const Center(child: CircularProgressIndicator()),
+        Positioned(
+          bottom: 10,
+          left: 10,
+          child: FloatingActionButton(
+            heroTag: null,
+            onPressed: () {
+              _controller.loadUrl(urlRequest: URLRequest(url: WebUri(widget.initialUrl)));
+            },
+            child: const Icon(Icons.home),
           ),
-        ],
-      ),
+        ),
+        Positioned(
+          bottom: 10,
+          right: 10,
+          child: FloatingActionButton(
+            heroTag: null,
+            onPressed: () {
+              _showQrCode(context);
+            },
+            child: const Icon(Icons.qr_code),
+          ),
+        ),
+      ],
     );
   }
 
-  void onPageFinished(String url, WebViewController controller) {
+  void onPageFinished(String url, InAppWebViewController controller) {
     // This can be overridden by subclasses to perform actions after the page finishes loading.
   }
 

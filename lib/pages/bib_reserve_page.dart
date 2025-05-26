@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:ef_race_pages/base_web_view_page.dart';
 
 class BibReservePage extends BaseWebViewPage {
@@ -18,10 +18,10 @@ class _BibReservePageState extends BaseWebViewPageState {
   _BibReservePageState(this.raceId);
 
   @override
-  void onPageFinished(String url, WebViewController controller) {
+  void onPageFinished(String url, InAppWebViewController controller) {
     super.onPageFinished(url, controller);
     // Inject JavaScript code to set the value of the race ID input element.
     final script = "document.getElementById('txtUserId').value = '$raceId';";
-    controller.runJavaScript(script);
+    controller.evaluateJavascript(source: script);
   }
 }

@@ -25,7 +25,11 @@ Flutter/app.zip
 Flutter/flutter_assets/
 Flutter/flutter_export_environment.sh
 ServiceDefinitions.json
+
 Runner/GeneratedPluginRegistrant.*
+macos/Flutter/GeneratedPluginRegistrant.swift
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugins.cmake
 
 # Exceptions to above rules.
 !default.mode1v3

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import '../models/user_settings.dart';
 import '../services/settings_service.dart';
@@ -29,12 +29,11 @@ class _SettingsPageState extends State<SettingsPage> {
     await SettingsService.saveUserSettings(_settings);
   }
 
-  // Add this method to clear cookies
+  // Updated method to clear cookies using flutter_inappwebview
   _clearCookies() async {
     try {
-      await WebViewCookieManager().clearCookies();
+      await CookieManager.instance().deleteAllCookies();
       if (mounted) {
-        // TODO: fix error here
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Cookies cleared successfully'),
@@ -67,7 +66,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const ListTile(
             title: Text('General Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           ),
-          // Add the cookie clearing button here
+          // Cookie clearing button
           ListTile(
             title: const Text('Clear Browser Cookies'),
             subtitle: const Text('Clear stored website data and cookies'),
