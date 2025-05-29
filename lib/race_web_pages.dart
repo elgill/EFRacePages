@@ -1,9 +1,12 @@
 import 'package:ef_race_pages/pages/bib_reserve_page.dart';
+import 'package:ef_race_pages/pages/recap_page.dart';
 import 'package:ef_race_pages/pages/registration_page.dart';
 import 'package:ef_race_pages/pages/bib_lookup_page.dart';
 import 'package:ef_race_pages/pages/results_page.dart';
 import 'package:ef_race_pages/pages/search_page.dart';
 import 'package:ef_race_pages/pages/settings_page.dart';
+import 'package:ef_race_pages/pages/more_page.dart';
+import 'package:ef_race_pages/pages/reader_status_page.dart';
 import 'package:ef_race_pages/race_id_setting_page.dart';
 import 'package:ef_race_pages/services/race_service.dart';
 import 'package:ef_race_pages/services/recent_event_manager.dart';
@@ -25,9 +28,15 @@ class _RaceWebPagesState extends State<RaceWebPages> {
   final ValueNotifier<int> _currentIndexNotifier = ValueNotifier<int>(0);
   final PageController _pageController = PageController();
 
+  // Store pages to maintain state
+  final Map<int, Widget> _cachedPages = {};
+
+  // Track which pages have been created for proper disposal
+  final Set<int> _createdPageIndices = <int>{};
+
   Race? _race;
-  String _registrationUrl = 'about:blank'; //placeholder
-  bool _isLoading = true;  // Add loading state
+  String _registrationUrl = 'about:blank';
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -39,6 +48,8 @@ class _RaceWebPagesState extends State<RaceWebPages> {
   void dispose() {
     _currentIndexNotifier.dispose();
     _pageController.dispose();
+    _cachedPages.clear();
+    _createdPageIndices.clear();
     super.dispose();
   }
 
@@ -50,8 +61,7 @@ class _RaceWebPagesState extends State<RaceWebPages> {
     if (mounted) {
       setState(() {
         _race = fetchedRace;
-        _registrationUrl = registrationUrl ??
-            "about:blank";
+        _registrationUrl = registrationUrl ?? "about:blank";
         _isLoading = false;
       });
     }
@@ -82,7 +92,7 @@ class _RaceWebPagesState extends State<RaceWebPages> {
                         ? Theme.of(context).brightness == Brightness.dark
                         ? Colors.grey[800]
                         : Colors.grey[200]
-                        : null, // Highlight current race based on theme // Highlight current race
+                        : null,
                     title: Text("${race.name} (${race.id})"),
                     trailing: IconButton(
                       icon: const Icon(Icons.clear),
@@ -90,11 +100,9 @@ class _RaceWebPagesState extends State<RaceWebPages> {
                         await removeRaceFromRecentList(race.id);
 
                         if (race.id == widget.raceId) {
-                          // Remove current race and check for other available races
-                          List<String> updatedRecentRaces = await getRecentRaces(); // Assuming this method updates itself after removeRaceFromRecentList is called
+                          List<String> updatedRecentRaces = await getRecentRaces();
 
                           if (updatedRecentRaces.isNotEmpty) {
-                            // If there are other races, switch to the first one in the updated list
                             String newRaceId = updatedRecentRaces.first;
                             Navigator.pushReplacement(
                               context,
@@ -103,7 +111,6 @@ class _RaceWebPagesState extends State<RaceWebPages> {
                               ),
                             );
                           } else {
-                            // If no other races, navigate to race selection page
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
@@ -113,12 +120,12 @@ class _RaceWebPagesState extends State<RaceWebPages> {
                           }
                         } else {
                           setState(() {});
-                        }// Refresh UI
+                        }
                       },
                     ),
                     onTap: () {
                       saveCurrentRace(race.id);
-                      Navigator.pop(context);  // Close the drawer
+                      Navigator.pop(context);
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
@@ -141,14 +148,14 @@ class _RaceWebPagesState extends State<RaceWebPages> {
                     onTap: () {
                       clearAllRecentRaces();
                       clearCurrentRace();
-                      Navigator.pop(context);  // Close the drawer
+                      Navigator.pop(context);
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const RaceIDSettingPage(),
                         ),
                       );
-                      setState(() {});  // Refresh UI
+                      setState(() {});
                     },
                   ),
                 ],
@@ -158,6 +165,81 @@ class _RaceWebPagesState extends State<RaceWebPages> {
         );
       },
     );
+  }
+
+  Widget _getPage(int index) {
+    // Return cached page if it exists
+    if (_cachedPages.containsKey(index)) {
+      return _cachedPages[index]!;
+    }
+
+    Widget page;
+    switch (index) {
+      case 0:
+        page = RegistrationPage(raceId: widget.raceId, initialUrl: _registrationUrl);
+        break;
+      case 1:
+        page = BibLookupPage(raceId: widget.raceId);
+        break;
+      case 2:
+        page = ResultsPage(raceId: widget.raceId);
+        break;
+      case 3:
+        page = SearchPage(raceId: widget.raceId);
+        break;
+      case 4:
+      // More page is always fresh to ensure callback works properly
+        return MorePage(
+          raceId: widget.raceId,
+          onNavigateToPage: _navigateToPage,
+        );
+      case 5:
+        page = BibReservePage(raceId: widget.raceId);
+        break;
+      case 6:
+        page = const ReaderStatusPage();
+        break;
+      case 7:
+        page = const RecapPage();
+        break;
+      default:
+        page = Container();
+    }
+
+    // Cache the page and track its creation
+    _cachedPages[index] = page;
+    _createdPageIndices.add(index);
+    return page;
+  }
+
+  void _navigateToPage(int pageIndex) {
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(pageIndex);
+    }
+  }
+
+  // Get the bottom navigation index (0-4) from the current page index
+  int _getBottomNavIndex(int pageIndex) {
+    if (pageIndex >= 5) {
+      return 4; // Always show "More" as selected for additional pages
+    }
+    return pageIndex;
+  }
+
+  // Get the app bar title based on current page
+  String _getAppBarTitle(int currentIndex) {
+    if (_race == null) return "Loading...";
+
+    switch (currentIndex) {
+      case 5:
+        return "${_race!.name} - Bib Reserve";
+      case 6:
+        return "${_race!.name} - Reader Status";
+      case 7:
+        return "${_race!.name} - Event Recap";
+      default:
+        return _race!.name;
+    }
   }
 
   @override
@@ -171,8 +253,26 @@ class _RaceWebPagesState extends State<RaceWebPages> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_race != null ? _race!.name : "Loading..."),
+        title: ValueListenableBuilder<int>(
+          valueListenable: _currentIndexNotifier,
+          builder: (context, currentIndex, child) {
+            return Text(_getAppBarTitle(currentIndex));
+          },
+        ),
         actions: [
+          // Add back button for additional pages
+          ValueListenableBuilder<int>(
+            valueListenable: _currentIndexNotifier,
+            builder: (context, currentIndex, child) {
+              if (currentIndex >= 5) {
+                return IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => _pageController.jumpToPage(4), // Go back to More page
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
@@ -183,7 +283,6 @@ class _RaceWebPagesState extends State<RaceWebPages> {
             },
           ),
         ],
-
       ),
       drawer: _buildDrawer(),
       body: SafeArea(
@@ -193,15 +292,8 @@ class _RaceWebPagesState extends State<RaceWebPages> {
           controller: _pageController,
           onPageChanged: (index) => _currentIndexNotifier.value = index,
           physics: const NeverScrollableScrollPhysics(),
-          itemBuilder: (context, index) {
-            if (index == 0) return RegistrationPage(raceId: widget.raceId, initialUrl: _registrationUrl);
-            if (index == 1) return BibLookupPage(raceId: widget.raceId);
-            if (index == 2) return BibReservePage(raceId: widget.raceId);
-            if (index == 3) return ResultsPage(raceId: widget.raceId);
-            if (index == 4) return SearchPage(raceId: widget.raceId);
-            //... add more cases as required
-            return Container();
-          },
+          itemCount: 8, // Total pages: 5 main + 3 additional
+          itemBuilder: (context, index) => _getPage(index),
         ),
       ),
       bottomNavigationBar: ValueListenableBuilder<int>(
@@ -209,7 +301,7 @@ class _RaceWebPagesState extends State<RaceWebPages> {
         builder: (context, currentIndex, child) {
           return BottomNavigationBar(
             type: BottomNavigationBarType.fixed,
-            currentIndex: currentIndex,
+            currentIndex: _getBottomNavIndex(currentIndex),
             items: const [
               BottomNavigationBarItem(
                 icon: Icon(Icons.app_registration),
@@ -220,10 +312,6 @@ class _RaceWebPagesState extends State<RaceWebPages> {
                 label: 'Lookup',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.event_note),
-                label: 'Reserve',
-              ),
-              BottomNavigationBarItem(
                 icon: Icon(Icons.leaderboard),
                 label: 'Results',
               ),
@@ -231,9 +319,16 @@ class _RaceWebPagesState extends State<RaceWebPages> {
                 icon: Icon(Icons.search),
                 label: 'Search',
               ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.more_horiz),
+                label: 'More',
+              ),
             ],
             onTap: (index) {
-              _pageController.jumpToPage(index);
+              // Only navigate to main pages (0-4) from bottom navigation
+              if (index <= 4) {
+                _pageController.jumpToPage(index);
+              }
             },
           );
         },

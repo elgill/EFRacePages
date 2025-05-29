@@ -16,12 +16,14 @@ class MyApp extends StatelessWidget {
         // Add other theme properties if required
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        useMaterial3: false
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         // Add other theme properties if required
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        useMaterial3: false
       ),
       home: FutureBuilder<String?>(
         future: getCurrentRace(),
