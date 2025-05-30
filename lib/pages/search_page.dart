@@ -150,7 +150,8 @@ class _SearchPageState extends State<SearchPage> {
             SnackBar(
                 content: Text('Updated ${scrapedData.length} participants'),
                 backgroundColor: Colors.green,
-                behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
             )
         );
         _searchDatabase(_searchController.text);
@@ -487,6 +488,7 @@ class _SearchPageState extends State<SearchPage> {
           content: Text(message),
           backgroundColor: backgroundColor,
           behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
         )
     );
   }

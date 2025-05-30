@@ -244,8 +244,20 @@ class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliv
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      onPressed: () {
-                        Share.share(_currentUrl!, subject: 'Check out this page');
+                      onPressed: () async {
+                        try {
+                          // Try to use shareUri first (better for URL recognition)
+                          final uri = Uri.tryParse(_currentUrl!);
+                          if (uri != null) {
+                            await Share.shareUri(uri);
+                          } else {
+                            // Fallback to regular share
+                            await Share.share(_currentUrl!, subject: 'Check out this page');
+                          }
+                        } catch (e) {
+                          // If shareUri fails (older versions), fall back to regular share
+                          await Share.share(_currentUrl!, subject: 'Check out this page');
+                        }
                         Navigator.of(context).pop();
                       },
                     ),
