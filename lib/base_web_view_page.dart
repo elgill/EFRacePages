@@ -13,11 +13,12 @@ class BaseWebViewPage extends StatefulWidget {
   BaseWebViewPageState createState() => BaseWebViewPageState();
 }
 
-class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliveClientMixin {
+class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   bool _isLoading = true;
   late InAppWebViewController _controller;
   String? _currentUrl;
   late PullToRefreshController _pullToRefreshController;
+  bool _controllerReady = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -25,6 +26,7 @@ class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliv
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     _pullToRefreshController = PullToRefreshController(
       settings: PullToRefreshSettings(
@@ -38,8 +40,41 @@ class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliv
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // When app resumes and controller is ready, check if page needs reload
+    if (state == AppLifecycleState.resumed && _controllerReady) {
+      _checkAndReloadIfNeeded();
+    }
+  }
+
+  Future<void> _checkAndReloadIfNeeded() async {
+    try {
+      // Try to get the current URL from the controller
+      final url = await _controller.getUrl();
+      // If URL is null or about:blank, reload the initial URL
+      if (url == null || url.toString() == 'about:blank') {
+        _controller.loadUrl(urlRequest: URLRequest(url: WebUri(widget.initialUrl)));
+      }
+    } catch (e) {
+      // If there's an error accessing the controller, reload
+      _controller.loadUrl(urlRequest: URLRequest(url: WebUri(widget.initialUrl)));
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(BaseWebViewPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If widget is updated and controller is ready, check if reload is needed
+    if (_controllerReady) {
+      Future.microtask(() => _checkAndReloadIfNeeded());
+    }
   }
 
   @override
@@ -53,6 +88,7 @@ class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliv
           pullToRefreshController: _pullToRefreshController,
           onWebViewCreated: (controller) {
             _controller = controller;
+            _controllerReady = true;
           },
           onLoadStart: (controller, url) {
             setState(() {
