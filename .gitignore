@@ -637,6 +637,13 @@ hs_err_pid*
 
 *~
 
+linux/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugin_registrant.cc
+linux/flutter/generated_plugins.cmake
+windows/flutter/generated_plugins.cmake
+macos/Flutter/GeneratedPluginRegistrant.swift
+
+
 # temporary files which can be created if a process still has a handle open of a deleted file
 .fuse_hidden*
 
