@@ -13,7 +13,7 @@ class BaseWebViewPage extends StatefulWidget {
   BaseWebViewPageState createState() => BaseWebViewPageState();
 }
 
-class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
+class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliveClientMixin, WidgetsBindingObserver, TickerProviderStateMixin {
   bool _isLoading = true;
   late InAppWebViewController _controller;
   String? _currentUrl;
@@ -105,6 +105,9 @@ class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliv
           },
           onReceivedError: (controller, request, error) {
             _pullToRefreshController.endRefreshing();
+          },
+          onConsoleMessage: (controller, consoleMessage) {
+            print('WebView Console: ${consoleMessage.message}');
           },
           initialSettings: InAppWebViewSettings(
             useShouldOverrideUrlLoading: false,
