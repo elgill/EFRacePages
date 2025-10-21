@@ -33,45 +33,99 @@ class _RecapPageState extends BaseWebViewPageState {
       // Clean the date - remove alphabetic characters and extra spaces
       String cleanedDate = _cleanDate(race.date);
 
-      // Combine race name and cleaned date
-      String eventNameAndDate = '${race.name} - $cleanedDate';
+      // Escape strings for JavaScript to prevent injection and syntax errors
+      String escapedName = _escapeForJavaScript(race.name);
+      String escapedDate = _escapeForJavaScript(cleanedDate);
 
-      // JavaScript to find and fill the form field
+      // Wait a moment for the form to fully initialize
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // JavaScript to find and fill the form fields (now separate name and date fields)
       final script = '''
-        // Function to find the input field by its placeholder text
-        function findEventNameField() {
-          const inputs = document.querySelectorAll('input[type="text"]');
-          for (let input of inputs) {
-            if (input.placeholder && input.placeholder.includes('Copy & paste from results page')) {
-              return input;
-            }
-          }
-          
-          // Alternative: find by label text
-          const labels = document.querySelectorAll('label');
-          for (let label of labels) {
-            if (label.textContent && label.textContent.includes('NAME & DATE OF EVENT')) {
-              const forAttr = label.getAttribute('for');
-              if (forAttr) {
-                return document.getElementById(forAttr);
-              }
-            }
-          }
-          
-          return null;
-        }
+        (function() {
+          const raceName = "$escapedName";
+          const raceDate = "$escapedDate";
 
-        // Find and fill the field
-        const eventField = findEventNameField();
-        if (eventField) {
-          eventField.value = '$eventNameAndDate';
-          // Trigger change event in case the form is listening for it
-          eventField.dispatchEvent(new Event('input', { bubbles: true }));
-          eventField.dispatchEvent(new Event('change', { bubbles: true }));
-        }
+          console.log('[Autofill] Starting autofill');
+          console.log('[Autofill] Name: ' + raceName);
+          console.log('[Autofill] Date: ' + raceDate);
+
+          // Function to fill a field with proper event triggering
+          function fillField(field, value) {
+            if (!field) return false;
+
+            // Set the value
+            field.value = value;
+
+            // Mark as touched/dirty to prevent form resets
+            field.setAttribute('data-autofilled', 'true');
+
+            // Focus the field briefly
+            field.focus();
+
+            // Trigger all relevant events
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+            field.dispatchEvent(new Event('blur', { bubbles: true }));
+
+            // For React forms, use native setter
+            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+              window.HTMLInputElement.prototype,
+              'value'
+            ).set;
+            if (nativeInputValueSetter) {
+              nativeInputValueSetter.call(field, value);
+              field.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            console.log('[Autofill] Filled field with: ' + value);
+            return true;
+          }
+
+          // Find the name and date fields
+          let nameField = null;
+          let dateField = null;
+
+          const inputs = document.querySelectorAll('input[type="text"]');
+          console.log('[Autofill] Found ' + inputs.length + ' text inputs');
+
+          for (let input of inputs) {
+            const placeholder = (input.placeholder || '').toLowerCase();
+            console.log('[Autofill] Checking placeholder: ' + input.placeholder);
+
+            if (placeholder.includes('event name') && placeholder.includes('copy')) {
+              nameField = input;
+              console.log('[Autofill] Found name field');
+            } else if (placeholder.includes('event date') && placeholder.includes('copy')) {
+              dateField = input;
+              console.log('[Autofill] Found date field');
+            }
+          }
+
+          // Fill the fields
+          let nameSuccess = false;
+          let dateSuccess = false;
+
+          if (nameField) {
+            nameSuccess = fillField(nameField, raceName);
+          } else {
+            console.log('[Autofill] Name field not found');
+          }
+
+          if (dateField) {
+            dateSuccess = fillField(dateField, raceDate);
+          } else {
+            console.log('[Autofill] Date field not found');
+          }
+
+          return nameSuccess && dateSuccess;
+        })();
       ''';
 
-      await controller.evaluateJavascript(source: script);
+      final result = await controller.evaluateJavascript(source: script);
+      if (result != true) {
+        print('Warning: Event name field not found or autofill failed');
+      }
     } catch (e) {
       print('Error autofilling event data: $e');
     }
@@ -87,5 +141,19 @@ class _RecapPageState extends BaseWebViewPageState {
     cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
 
     return cleaned;
+  }
+
+  /// Escapes a string for safe use in JavaScript
+  /// Handles quotes, newlines, backslashes, and other special characters
+  String _escapeForJavaScript(String str) {
+    return str
+        .replaceAll('\\', '\\\\')  // Backslash must be first
+        .replaceAll('"', '\\"')     // Escape double quotes
+        .replaceAll("'", "\\'")     // Escape single quotes
+        .replaceAll('\n', '\\n')    // Escape newlines
+        .replaceAll('\r', '\\r')    // Escape carriage returns
+        .replaceAll('\t', '\\t')    // Escape tabs
+        .replaceAll('\b', '\\b')    // Escape backspace
+        .replaceAll('\f', '\\f');   // Escape form feed
   }
 }
