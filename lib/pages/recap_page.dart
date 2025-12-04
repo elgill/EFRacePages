@@ -132,13 +132,26 @@ class _RecapPageState extends BaseWebViewPageState {
   }
 
   /// Cleans the date string by removing alphabetic characters and extra spaces
-  /// Example: "Mon 6/13/25" becomes "6/13/25"
+  /// Converts 4-digit year to 2-digit year format
+  /// Example: "Mon 6/13/2025" becomes "6/13/25"
   String _cleanDate(String date) {
     // Remove all alphabetic characters and trim spaces
     String cleaned = date.replaceAll(RegExp(r'[a-zA-Z]'), '').trim();
 
     // Replace multiple spaces with single space, then trim again
     cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+    // Convert 4-digit year to 2-digit year (e.g., "6/13/2025" -> "6/13/25")
+    // Match date pattern with 4-digit year
+    final yearPattern = RegExp(r'(\d{1,2}/\d{1,2}/)(\d{4})');
+    final match = yearPattern.firstMatch(cleaned);
+
+    if (match != null) {
+      String datePart = match.group(1)!; // "6/13/"
+      String year = match.group(2)!; // "2025"
+      String twoDigitYear = year.substring(2); // "25"
+      cleaned = datePart + twoDigitYear;
+    }
 
     return cleaned;
   }
