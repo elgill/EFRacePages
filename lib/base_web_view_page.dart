@@ -284,18 +284,21 @@ class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliv
                         ),
                       ),
                       onPressed: () async {
-                        try {
-                          // Try to use shareUri first (better for URL recognition)
-                          final uri = Uri.tryParse(_currentUrl!);
-                          if (uri != null) {
-                            await Share.shareUri(uri);
-                          } else {
-                            // Fallback to regular share
-                            await Share.share(_currentUrl!, subject: 'Check out this page');
-                          }
-                        } catch (e) {
-                          // If shareUri fails (older versions), fall back to regular share
-                          await Share.share(_currentUrl!, subject: 'Check out this page');
+                        final uri = Uri.tryParse(_currentUrl!);
+                        if (uri != null) {
+                          await SharePlus.instance.share(
+                              ShareParams(
+                                  uri: uri,
+                                  sharePositionOrigin: Rect.fromLTWH(0, 0, 1, 1)
+                              )
+                          );
+                        } else {
+                          await SharePlus.instance.share(
+                              ShareParams(
+                                  text: _currentUrl!, subject: 'Check out this page',
+                                  sharePositionOrigin: Rect.fromLTWH(0, 0, 1, 1)
+                              )
+                          );
                         }
                         Navigator.of(context).pop();
                       },
