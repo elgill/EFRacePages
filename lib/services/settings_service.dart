@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:developer';
 
 import '../models/user_settings.dart';
 
@@ -27,12 +28,17 @@ class SettingsService {
 
   }
 
-  // Load settings
+  // Load settings. Unreadable saved settings fall back to the defaults
+  // rather than throwing into every page that loads them.
   static Future<UserSettings> loadUserSettings() async {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.containsKey(_settingsKey)) {
-      Map<String, dynamic> settingsMap = jsonDecode(prefs.getString(_settingsKey)!);
-      return UserSettings.fromMap(settingsMap);
+      try {
+        Map<String, dynamic> settingsMap = jsonDecode(prefs.getString(_settingsKey)!);
+        return UserSettings.fromMap(settingsMap);
+      } catch (e) {
+        log('Ignoring unreadable saved settings: $e');
+      }
     }
     return UserSettings.getDefault();
   }

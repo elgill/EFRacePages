@@ -15,10 +15,10 @@ class BaseWebViewPage extends StatefulWidget {
 
 class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliveClientMixin, WidgetsBindingObserver, TickerProviderStateMixin {
   bool _isLoading = true;
-  late InAppWebViewController _controller;
+  // Null until the native webview has been created.
+  InAppWebViewController? _controller;
   String? _currentUrl;
   late PullToRefreshController _pullToRefreshController;
-  bool _controllerReady = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -34,7 +34,12 @@ class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliv
       ),
       onRefresh: () async {
         // Explicitly reload the current page
-        await _controller.reload();
+        final controller = _controller;
+        if (controller == null) {
+          await _pullToRefreshController.endRefreshing();
+          return;
+        }
+        await controller.reload();
       },
     );
   }
@@ -43,22 +48,32 @@ class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliv
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     // When app resumes and controller is ready, check if page needs reload
-    if (state == AppLifecycleState.resumed && _controllerReady) {
+    if (state == AppLifecycleState.resumed && _controller != null) {
       _checkAndReloadIfNeeded();
     }
   }
 
   Future<void> _checkAndReloadIfNeeded() async {
+    final controller = _controller;
+    if (controller == null) return;
     try {
       // Try to get the current URL from the controller
-      final url = await _controller.getUrl();
+      final url = await controller.getUrl();
       // If URL is null or about:blank, reload the initial URL
       if (url == null || url.toString() == 'about:blank') {
-        _controller.loadUrl(urlRequest: URLRequest(url: WebUri(widget.initialUrl)));
+        await _loadInitialUrl();
       }
     } catch (e) {
       // If there's an error accessing the controller, reload
-      _controller.loadUrl(urlRequest: URLRequest(url: WebUri(widget.initialUrl)));
+      await _loadInitialUrl();
+    }
+  }
+
+  Future<void> _loadInitialUrl() async {
+    try {
+      await _controller?.loadUrl(urlRequest: URLRequest(url: WebUri(widget.initialUrl)));
+    } catch (e) {
+      debugPrint('Failed to load ${widget.initialUrl}: $e');
     }
   }
 
@@ -72,7 +87,7 @@ class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliv
   void didUpdateWidget(BaseWebViewPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     // If widget is updated and controller is ready, check if reload is needed
-    if (_controllerReady) {
+    if (_controller != null) {
       Future.microtask(() => _checkAndReloadIfNeeded());
     }
   }
@@ -88,15 +103,18 @@ class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliv
           pullToRefreshController: _pullToRefreshController,
           onWebViewCreated: (controller) {
             _controller = controller;
-            _controllerReady = true;
           },
+          // Native callbacks can arrive after this page has been disposed
+          // (e.g. the user switched race mid-load), so check `mounted`.
           onLoadStart: (controller, url) {
+            if (!mounted) return;
             setState(() {
               _isLoading = true;
               _currentUrl = url?.toString();
             });
           },
           onLoadStop: (controller, url) async {
+            if (!mounted) return;
             setState(() {
               _isLoading = false;
             });
@@ -124,9 +142,7 @@ class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliv
           left: 10,
           child: FloatingActionButton(
             heroTag: null,
-            onPressed: () {
-              _controller.loadUrl(urlRequest: URLRequest(url: WebUri(widget.initialUrl)));
-            },
+            onPressed: _loadInitialUrl,
             child: const Icon(Icons.home),
           ),
         ),

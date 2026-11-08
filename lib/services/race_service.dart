@@ -29,11 +29,18 @@ class RaceService {
     final prefs = await SharedPreferences.getInstance();
     final keys = prefs.getKeys();
     final races = <Race>[];
+    // Races share SharedPreferences with other settings (currentRace,
+    // recentRaces, userSettings, ...), so skip anything that isn't a race.
     for (var key in keys) {
-      final jsonString = prefs.getString(key);
-      if (jsonString != null) {
-        final jsonData = json.decode(jsonString);
-        races.add(Race.fromJson(jsonData));
+      final value = prefs.get(key);
+      if (value is! String) continue;
+      try {
+        final jsonData = json.decode(value);
+        if (jsonData is Map<String, dynamic>) {
+          races.add(Race.fromJson(jsonData));
+        }
+      } catch (_) {
+        // Not a race record.
       }
     }
     return races; // Return a list of all Race objects stored in SharedPreferences

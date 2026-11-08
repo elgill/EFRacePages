@@ -9,6 +9,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/user_settings.dart';
+import '../services/bib_database.dart';
 import '../services/settings_service.dart';
 
 class SearchPage extends StatefulWidget {
@@ -25,7 +26,9 @@ class _SearchPageState extends State<SearchPage> {
   bool _isLoading = true;
   bool _isAscending = true;
 
-  late UserSettings _userSettings;
+  // Start from defaults so build/search never read an unset value while the
+  // saved settings are still loading.
+  UserSettings _userSettings = UserSettings.getDefault();
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -45,44 +48,28 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
-    _loadUserSettings();
-    _checkAndClearDbIfNeeded();
-    _loadData();
-
     SettingsService.addListener(_settingsChanged);
+    _initialize();
+  }
+
+  /// Startup steps run in order: the race-change check must finish clearing
+  /// the old roster before the new one is stored.
+  Future<void> _initialize() async {
+    await _loadUserSettings();
+    try {
+      await _checkAndClearDbIfNeeded();
+    } catch (e) {
+      log('Failed to prepare local roster: $e');
+    }
+    await _loadData();
   }
 
   Future<void> _loadUserSettings() async {
     UserSettings settings = await SettingsService.loadUserSettings();
+    if (!mounted) return;
     setState(() {
       _userSettings = settings;
     });
-  }
-
-
-  Future<Database> _openDatabase() async {
-    return await openDatabase(
-      'race_data.db',
-      version: 1,
-      onCreate: (db, version) async {
-        await db.execute('''
-        CREATE TABLE bib_data (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          bib INTEGER,
-          name TEXT,
-          age INTEGER,
-          gender TEXT,
-          city TEXT,
-          state TEXT,
-          division TEXT,
-          team TEXT,
-          t_shirt TEXT,
-          extra TEXT,
-          status TEXT
-        );
-      ''');
-      },
-    );
   }
 
 
@@ -142,6 +129,9 @@ class _SearchPageState extends State<SearchPage> {
     try {
       var scrapedData = await scrapeDataFromWebPage(widget.raceId);
 
+      // Don't overwrite the roster if the user has moved on to another race.
+      if (!mounted) return;
+
       if (scrapedData.isNotEmpty) {
         await storeDataLocally(scrapedData);
 
@@ -173,13 +163,21 @@ class _SearchPageState extends State<SearchPage> {
         _showSnackBarWithMessage('Failed to parse data. Are bibs posted to bib lookup?', Colors.red);
       }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
 
   Future<void> _searchDatabase(String query) async {
-    final db = await _openDatabase();
+    try {
+      await _runSearch(query);
+    } catch (e) {
+      log('Search failed: $e');
+    }
+  }
+
+  Future<void> _runSearch(String query) async {
+    final db = await BibDatabase.instance;
     List<Map<String, dynamic>> results = [];
 
     // Define the sort order based on the _isAscending flag
@@ -259,10 +257,10 @@ class _SearchPageState extends State<SearchPage> {
       results = await db.query('bib_data', orderBy: 'bib $sortOrder');
     }
 
+    if (!mounted) return;
     setState(() {
       _searchResults = results;
     });
-    await db.close();
   }
 
 
@@ -270,7 +268,7 @@ class _SearchPageState extends State<SearchPage> {
 
 // Function to store data in SQLite database
   Future<void> storeDataLocally(List<Map<String, dynamic>> data) async {
-    final db = await _openDatabase();
+    final db = await BibDatabase.instance;
     await db.transaction((txn) async {
       await txn.delete('bib_data'); // Clear the table
 
@@ -278,7 +276,6 @@ class _SearchPageState extends State<SearchPage> {
         await txn.insert('bib_data', row, conflictAlgorithm: ConflictAlgorithm.replace);
       }
     });
-    await db.close();
   }
 
   Future<void> _checkAndClearDbIfNeeded() async {
@@ -295,18 +292,15 @@ class _SearchPageState extends State<SearchPage> {
       log('Database cleared and new Race ID stored.');
     } else {
       log('Race ID is the same. No need to clear database.');
-      _searchDatabase(_searchController.text);
+      await _searchDatabase(_searchController.text);
     }
   }
 
 
   // Function to store data in SQLite database
   Future<void> clearDbData() async {
-    final db = await _openDatabase();
-    await db.transaction((txn) async {
-      await txn.delete('bib_data'); // Clear the table
-    });
-    await db.close();
+    final db = await BibDatabase.instance;
+    await db.delete('bib_data'); // Clear the table
   }
 
   @override
@@ -399,16 +393,23 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Future<void> _showStats() async {
-    final db = await _openDatabase();
+    final List<Map> tShirtSizes, divisions, genders, teams;
+    try {
+      final db = await BibDatabase.instance;
     // Example query to calculate total number of people for each t-shirt size
-    List<Map> tShirtSizes = await db.rawQuery('SELECT t_shirt, COUNT(*) as total FROM bib_data GROUP BY t_shirt ORDER BY COUNT(*) DESC');
+      tShirtSizes = await db.rawQuery('SELECT t_shirt, COUNT(*) as total FROM bib_data GROUP BY t_shirt ORDER BY COUNT(*) DESC');
 
-    // Similar queries for division and gender
-    List<Map> divisions = await db.rawQuery('SELECT division, COUNT(*) as total FROM bib_data GROUP BY division ORDER BY COUNT(*) DESC');
-    List<Map> genders = await db.rawQuery('SELECT gender, COUNT(*) as total FROM bib_data GROUP BY gender ORDER BY COUNT(*) DESC');
-    List<Map> teams = await db.rawQuery('SELECT team, COUNT(*) as total FROM bib_data GROUP BY team ORDER BY COUNT(*) DESC');
+      // Similar queries for division and gender
+      divisions = await db.rawQuery('SELECT division, COUNT(*) as total FROM bib_data GROUP BY division ORDER BY COUNT(*) DESC');
+      genders = await db.rawQuery('SELECT gender, COUNT(*) as total FROM bib_data GROUP BY gender ORDER BY COUNT(*) DESC');
+      teams = await db.rawQuery('SELECT team, COUNT(*) as total FROM bib_data GROUP BY team ORDER BY COUNT(*) DESC');
+    } catch (e) {
+      log('Failed to load stats: $e');
+      _showSnackBarWithMessage('Could not load statistics. Please try again.', Colors.red);
+      return;
+    }
 
-    await db.close();
+    if (!mounted) return;
 
     // Show the results
     _showStatsDialog(tShirtSizes, divisions, genders, teams);
