@@ -32,7 +32,6 @@ dependencies:
     sdk: flutter
   shared_preferences: ^2.5.6
   qr_flutter: ^4.1.0
-  qr: ^3.0.3
   http: ^1.6.0
   html: ^0.15.7
   flutter_inappwebview: ^6.1.5
