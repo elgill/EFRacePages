@@ -150,8 +150,7 @@ void main() {
 
     group('share dialog', () {
       setUp(() {
-        // Phone portrait. (In short landscape viewports the dialog's Column
-        // overflows its 80%-height constraint; cosmetic, not covered here.)
+        // Phone portrait.
         final view =
             TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
         view.physicalSize = const Size(1170, 2532);
@@ -196,6 +195,31 @@ void main() {
         expect(copied, other);
         expect(find.text('Share Page'), findsNothing);
         expect(find.text('URL copied to clipboard'), findsOneWidget);
+      });
+
+      testWidgets('fits a landscape phone by scrolling (no overflow)',
+          (tester) async {
+        // 844x390 logical: an iPhone 14 on its side. The dialog is capped
+        // at 80% of screen height, which used to overflow by ~19px+.
+        tester.view.physicalSize = const Size(2532, 1170);
+        tester.view.devicePixelRatio = 3;
+        final wv =
+            await pumpPage(tester, const BaseWebViewPage(initialUrl: home));
+        wv.fireLoadStart(other);
+        wv.fireLoadStop(other);
+        await tester.tap(find.byIcon(Icons.qr_code));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+
+        // The action buttons are reachable by scrolling.
+        await tester.scrollUntilVisible(find.text('Share'), 50,
+            // .first: the dialog's scroll view (the URL's SelectableText
+            // has its own Scrollable further down the tree).
+            scrollable: find
+                .descendant(
+                    of: find.byType(Dialog), matching: find.byType(Scrollable))
+                .first);
+        expect(find.text('Share'), findsOneWidget);
       });
 
       testWidgets('close button dismisses', (tester) async {

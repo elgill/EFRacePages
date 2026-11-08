@@ -184,145 +184,148 @@ class BaseWebViewPageState extends State<BaseWebViewPage> with AutomaticKeepAliv
             maxWidth: MediaQuery.of(context).size.width * 0.9,
             maxHeight: MediaQuery.of(context).size.height * 0.8,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Title
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Share Page",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+          // Scrolls when the screen is too short (e.g. landscape phones).
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Title
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Share Page",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // QR Code with white background for better scanning
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
                 ),
-                child: Center(
-                  child: QrImageView(
-                    data: _currentUrl!,
-                    version: QrVersions.auto,
-                    size: 220.0,
-                    foregroundColor: Colors.black,
-                    backgroundColor: Colors.white,
-                    errorCorrectionLevel: QrErrorCorrectLevel.M,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // URL Display
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isDarkMode ? Colors.grey[600]! : Colors.grey[300]!,
-                  ),
-                ),
-                child: SelectableText(
-                  _currentUrl!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDarkMode ? Colors.white70 : Colors.black87,
-                    fontFamily: 'monospace',
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Action Buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  // Copy URL Button
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.copy, size: 18),
-                      label: const Text("Copy URL"),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                const SizedBox(height: 16),
+  
+                // QR Code with white background for better scanning
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(text: _currentUrl!));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('URL copied to clipboard'),
-                            duration: Duration(seconds: 2),
-                            behavior: SnackBarBehavior.floating,
+                    ],
+                  ),
+                  child: Center(
+                    child: QrImageView(
+                      data: _currentUrl!,
+                      version: QrVersions.auto,
+                      size: 220.0,
+                      foregroundColor: Colors.black,
+                      backgroundColor: Colors.white,
+                      errorCorrectionLevel: QrErrorCorrectLevel.M,
+                    ),
+                  ),
+                ),
+  
+                const SizedBox(height: 20),
+  
+                // URL Display
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isDarkMode ? Colors.grey[600]! : Colors.grey[300]!,
+                    ),
+                  ),
+                  child: SelectableText(
+                    _currentUrl!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                      fontFamily: 'monospace',
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+  
+                const SizedBox(height: 24),
+  
+                // Action Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // Copy URL Button
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.copy, size: 18),
+                        label: const Text("Copy URL"),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        );
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.share, size: 18),
-                      label: const Text("Share"),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
                         ),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: _currentUrl!));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('URL copied to clipboard'),
+                              duration: Duration(seconds: 2),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          Navigator.of(context).pop();
+                        },
                       ),
-                      onPressed: () async {
-                        final uri = Uri.tryParse(_currentUrl!);
-                        if (uri != null) {
-                          await SharePlus.instance.share(
-                              ShareParams(
-                                  uri: uri,
-                                  sharePositionOrigin: Rect.fromLTWH(0, 0, 1, 1)
-                              )
-                          );
-                        } else {
-                          await SharePlus.instance.share(
-                              ShareParams(
-                                  text: _currentUrl!, subject: 'Check out this page',
-                                  sharePositionOrigin: Rect.fromLTWH(0, 0, 1, 1)
-                              )
-                          );
-                        }
-                        Navigator.of(context).pop();
-                      },
                     ),
-                  ),
-                ],
-              ),
-            ],
+  
+                    const SizedBox(width: 12),
+  
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.share, size: 18),
+                        label: const Text("Share"),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () async {
+                          final uri = Uri.tryParse(_currentUrl!);
+                          if (uri != null) {
+                            await SharePlus.instance.share(
+                                ShareParams(
+                                    uri: uri,
+                                    sharePositionOrigin: Rect.fromLTWH(0, 0, 1, 1)
+                                )
+                            );
+                          } else {
+                            await SharePlus.instance.share(
+                                ShareParams(
+                                    text: _currentUrl!, subject: 'Check out this page',
+                                    sharePositionOrigin: Rect.fromLTWH(0, 0, 1, 1)
+                                )
+                            );
+                          }
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
